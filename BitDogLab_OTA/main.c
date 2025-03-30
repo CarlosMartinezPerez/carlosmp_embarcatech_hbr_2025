@@ -10,8 +10,8 @@
 #include <string.h>
 
 // Credenciais da sua rede aqui
-#define WIFI_SSID "nome-da-rede-wifi"
-#define WIFI_PASS "senha-da-rede-wifi"
+#define WIFI_SSID "VIVOFIBRA-8991_EXT" // "nome-da-rede-wifi"
+#define WIFI_PASS "cajuca1801" // "senha-da-rede-wifi"
 
 #define FIRMWARE_OFFSET 0x80000
 #define RED_LED_PIN 13

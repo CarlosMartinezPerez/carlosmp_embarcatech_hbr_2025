@@ -50,7 +50,7 @@ target_link_libraries(led_blink
     hardware_pll)
 
 # Usa um linker script personalizado
-pico_set_linker_script(led_blink ${CMAKE_CURRENT_SOURCE_DIR}/memmap_custom.ld)
+# pico_set_linker_script(led_blink ${CMAKE_CURRENT_SOURCE_DIR}/memmap_custom.ld)
 
 # Add the standard include files to the build
 target_include_directories(led_blink PRIVATE ${CMAKE_CURRENT_LIST_DIR})
