@@ -3,7 +3,7 @@
 #include "hardware/pll.h"
 #include "hardware/structs/clocks.h"
 
-#define LED_PIN 11
+#define LED_PIN 11 //Green
 
 int main() {
     // Reinicializa o clock do sistema
