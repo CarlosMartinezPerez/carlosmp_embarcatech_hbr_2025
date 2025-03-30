@@ -38,7 +38,7 @@ The **Tuner** project is the culminating assignment of Phase 1 of the Embarcatec
 
 - **Hardware:** BitDogLab development board.
 - **Software:** Raspberry Pi Pico extension for VS Code.
-- **Knowledge:** Basic understanding of embedded systems and C/C++ programming.
+- **Knowledge:** Basic understanding of embedded systems, C/C++ programming and, perhaps, electronics.
 
 ## Contributions
 
