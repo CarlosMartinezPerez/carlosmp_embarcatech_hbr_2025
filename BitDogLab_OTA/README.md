@@ -2,6 +2,6 @@
 
 ## Update the firmware to run in the board via Wi-Fi  
 
-follows  
+follows  WORK in PEOCESS
 
 
