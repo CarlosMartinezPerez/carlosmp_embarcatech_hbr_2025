@@ -33,7 +33,7 @@ The project uses the Pico SDK and is intended to run directly on the Raspberry P
 
 2. **Clone the Repository**  
    ```bash
-   git clone https://github.com/yourusername/Flash_Dump.git
+   git clone https://github.com/CarlosMartinezPerez/Flash_Dump.git
    cd Flash_Dump
    ```
 
@@ -79,7 +79,11 @@ The project uses the Pico SDK and is intended to run directly on the Raspberry P
 - **`XIP_BASE + FLASH_OFFSET`**: Points to the Flash memory address to start reading from (`XIP_BASE` is `0x10000000` on the RP2040).
 - **Hexadecimal Output**: Loops through the specified size, printing 16 bytes per line with their offset.
 
-The program enters an infinite loop after the dump to keep the Pico running (modify `tight_loop_contents` if additional functionality is desired).
+The program enters an infinite loop after the dump to keep the Pico running (modify `tight_loop_contents` if additional functionality is desired).  
+
+## RP2040 Memory Structure  
+
+The RP2040 microcontroller features a 2 MB onboard Flash memory, accessible starting at address 0x10000000 (defined as XIP_BASE in the Pico SDK). This Flash is used for Execute-In-Place (XIP) operation, allowing the CPU to run code directly from it. The memory map also includes 264 KB of SRAM split across six banks, but this project focuses solely on the Flash region. The FLASH_OFFSET in the code is added to XIP_BASE to define the starting point for the dump, and care should be taken to ensure the offset and size stay within the 2 MB boundary (0x10000000 to 0x101FFFFF).  
 
 ## Notes
 
