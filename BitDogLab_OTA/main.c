@@ -10,16 +10,17 @@
 #include <string.h>
 
 // Credenciais da sua rede aqui
-#define WIFI_SSID // "nome-da-rede-wifi"
-#define WIFI_PASS // "senha-da-rede-wifi"
+#define WIFI_SSID "nome-da-rede-wifi"
+#define WIFI_PASS "senha-da-rede-wifi"
 
 #define FIRMWARE_OFFSET 0x80000
 #define RED_LED_PIN 13
 #define GREEN_LED_PIN 11
 #define BLUE_LED_PIN 12
+#define BUTTON_PIN 6 // Pino do botão pra próxima credencial
 #define FLASH_TARGET_ADDR (XIP_BASE + FIRMWARE_OFFSET)
 #define FLASH_SECTOR_SIZE (1u << 12) // 4 KB
-#define MAX_FILE_SIZE (16 * 1024)
+#define MAX_FILE_SIZE (1568768)
 #define TFTP_BLOCK_SIZE 512
 
 #define I2C_PORT i2c1
@@ -36,7 +37,7 @@
 #define MAX_CREDENTIALS (FLASH_SECTOR_SIZE / WIFI_CREDENTIALS_SIZE) // 42 redes
 
 static struct tftp_context tftp_ctx;
-static uint8_t flash_buffer[MAX_FILE_SIZE];
+static uint8_t flash_buffer[FLASH_SECTOR_SIZE];
 static size_t flash_offset = 0;
 static uint32_t flash_write_addr = FLASH_TARGET_ADDR;
 bool transfer_completed = false;
@@ -45,15 +46,15 @@ static uint8_t wifi_buffer[WIFI_CREDENTIALS_SIZE];
 
 static inline void jump_to_firmware() {
     asm volatile (
-    "mov r0, %[start]\n"
-    "ldr r1, =%[vtable]\n"
-    "str r0, [r1]\n"
-    "ldmia r0, {r0, r1}\n"
-    "msr msp, r0\n"
-    "bx r1\n"
-    :
-    : [start] "r" (XIP_BASE + FIRMWARE_OFFSET), [vtable] "X" (PPB_BASE + M0PLUS_VTOR_OFFSET)
-    :
+        "mov r0, %[start]\n"
+        "ldr r1, =%[vtable]\n"
+        "str r0, [r1]\n"
+        "ldmia r0, {r0, r1}\n"
+        "msr msp, r0\n"
+        "bx r1\n"
+        :
+        : [start] "r" (XIP_BASE + FIRMWARE_OFFSET), [vtable] "X" (PPB_BASE + M0PLUS_VTOR_OFFSET)
+        :
     );
 }
 
@@ -108,6 +109,11 @@ static int tftp_write(void *handle, struct pbuf *p) {
         return 0;
     }
 
+    // Verifica se o tamanho total ultrapassa MAX_FILE_SIZE
+    if (flash_offset + p->tot_len > MAX_FILE_SIZE) {
+        return -1; // Rejeita o pacote se passar de 1,53 MB
+    }
+
     int remaining = p->tot_len;
     int offset = 0;
     while (remaining > 0) {
@@ -131,20 +137,49 @@ static int tftp_write(void *handle, struct pbuf *p) {
 static void tftp_close(void *handle) {
     if ((int)handle == 2) {
         if (flash_offset > 0) {
-            // Parsing da nova credencial
+            // Parsing da nova credencial com aspas pra SSID e senha
             char temp[WIFI_CREDENTIALS_SIZE];
             memcpy(temp, wifi_buffer, flash_offset);
             temp[flash_offset] = '\0';
 
-            char *ssid = temp;
+            char *ssid = NULL;
             char *pass = NULL;
-            for (int i = 0; i < flash_offset; i++) {
-                if (temp[i] == ' ' || temp[i] == '\t' || temp[i] == '\r' || temp[i] == '\n') {
-                    temp[i] = '\0';
-                    pass = &temp[i + 1];
-                    break;
+
+            // Caso com aspas: "SSID" "SENHA"
+            if (temp[0] == '"') {
+                ssid = temp + 1; // Pula a primeira aspa
+                for (int i = 1; i < flash_offset; i++) {
+                    if (temp[i] == '"') {
+                        temp[i] = '\0'; // Fecha o SSID
+                        for (int j = i + 1; j < flash_offset; j++) {
+                            if (temp[j] == '"') {
+                                pass = &temp[j + 1]; // Início da senha
+                                for (int k = j + 1; k < flash_offset; k++) {
+                                    if (temp[k] == '"') {
+                                        temp[k] = '\0'; // Fecha a senha
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
+            // Retrocompatibilidade: SSID PASS (sem aspas)
+            else {
+                ssid = temp;
+                for (int i = 0; i < flash_offset; i++) {
+                    if (temp[i] == ' ') {
+                        temp[i] = '\0';
+                        pass = &temp[i + 1];
+                        break;
+                    }
+                }
+            }
+
+            // Limpa quebras de linha ou espaços extras
             if (pass) {
                 for (int i = 0; i < strlen(pass); i++) {
                     if (pass[i] == '\r' || pass[i] == '\n') {
@@ -176,9 +211,11 @@ static void tftp_close(void *handle) {
             // Inserir nova credencial no início
             memcpy(sector_buffer, new_cred, WIFI_CREDENTIALS_SIZE);
 
-            // Gravar setor ajustado
+            // Gravar setor ajustado (com interrupções desabilitadas)
+            uint32_t ints = save_and_disable_interrupts();
             flash_range_erase(WIFI_CREDENTIALS_OFFSET, FLASH_SECTOR_SIZE);
             flash_range_program(WIFI_CREDENTIALS_OFFSET, sector_buffer, FLASH_SECTOR_SIZE);
+            restore_interrupts(ints);
 
             // Feedback
             for (int i = 0; i < 3; i++) {
@@ -235,6 +272,11 @@ int main() {
     gpio_set_dir(GREEN_LED_PIN, GPIO_OUT);
     gpio_set_dir(BLUE_LED_PIN, GPIO_OUT);
 
+    // Configura o botão no pino 6 como entrada com pull-up
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN);
+
     i2c_init(I2C_PORT, I2C_FREQ);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
@@ -282,7 +324,7 @@ int main() {
         connected_ssid[MAX_SSID_LEN - 1] = '\0';
     }
 
-    // Se falhar, busca na Flash
+    // Se falhar, busca na Flash com piscadas e botão
     if (!connected) {
         for (int i = 0; i < MAX_CREDENTIALS; i++) {
             strncpy(ssid, (const char *)(flash_data + i * WIFI_CREDENTIALS_SIZE), MAX_SSID_LEN - 1);
@@ -291,19 +333,42 @@ int main() {
             pass[MAX_PASS_LEN - 1] = '\0';
 
             if (ssid[0] == '\0' || ssid[0] == 0xFF) {
-                break;
+                break; // Para se não houver mais credenciais válidas
             }
 
+            printf("Tentando SSID: %s, Pass: %s\n", ssid, pass); // Debug
             gpio_put(GREEN_LED_PIN, 1);
             sleep_ms(200);
             gpio_put(GREEN_LED_PIN, 0);
             sleep_ms(200);
 
             if (!cyw43_arch_wifi_connect_timeout_ms(ssid, pass, CYW43_AUTH_WPA2_AES_PSK, 20000)) {
+                // Conexão bem-sucedida: pisca LED verde 5 vezes em 5 segundos
+                for (int j = 0; j < 5; j++) {
+                    gpio_put(GREEN_LED_PIN, 1);
+                    sleep_ms(500);
+                    gpio_put(GREEN_LED_PIN, 0);
+                    sleep_ms(500);
+                }
                 connected = true;
                 strncpy(connected_ssid, ssid, MAX_SSID_LEN - 1);
                 connected_ssid[MAX_SSID_LEN - 1] = '\0';
-                break;
+
+                // Aguarda botão pra tentar próxima credencial
+                sleep_ms(200); // Debounce
+                if (!gpio_get(BUTTON_PIN)) { // Botão pressionado (nível baixo)
+                    connected = false; // Tenta a próxima
+                    continue;
+                }
+                break; // Se não pressionar, usa essa credencial
+            } else {
+                // Falha na conexão: pisca LED vermelho 5 vezes em 5 segundos
+                for (int j = 0; j < 5; j++) {
+                    gpio_put(RED_LED_PIN, 1);
+                    sleep_ms(500);
+                    gpio_put(RED_LED_PIN, 0);
+                    sleep_ms(500);
+                }
             }
         }
     }
