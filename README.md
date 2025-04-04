@@ -1,8 +1,7 @@
 # Embarcatech 2025 Training Projects
 ### Carlos Martinez Perez - HBR Campinas
 
-#### Note
-All projects in this repository were developed for the BitDogLab board, a wonderful open-source educational initiative by Professor Fabiano Fruet from Unicamp.  
+###### Note: All projects in this repository were developed for the BitDogLab board, a wonderful open-source educational initiative by Professor Fabiano Fruet from Unicamp.  
 
 Welcome to my GitHub repository containing projects developed during the **Embarcatech 2025** training program, as well as personal development projects. This repository showcases my progress, studies, and hands-on work with embedded systems, focusing on the **BitDogLab** platform. Below, you'll find highlights of key projects, including my personal project **BitDogLab_OTA** and the **Tuner** project, the final task of Phase 1 of the training. The repository also includes tests, development tools, and study materials.
 
