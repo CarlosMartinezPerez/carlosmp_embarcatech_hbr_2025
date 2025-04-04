@@ -2,8 +2,8 @@
 #include "pico/stdlib.h"
 #include "hardware/flash.h"
 
-#define FLASH_OFFSET  0x1FF000 // Altere para o offset desejado (a ser somado a 0x10000000)
-#define DUMP_SIZE     4096    // Tamanho do dump
+#define FLASH_OFFSET  0x080000 // Altere para o offset desejado (a ser somado a 0x10000000)
+#define DUMP_SIZE     4096    // Tamanho do dump na flash
 
 int main() {
     stdio_init_all();
