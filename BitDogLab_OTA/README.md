@@ -2,7 +2,7 @@
 
 ## Update the firmware to run on the BitDogLab board via Wi-Fi.  
 
-![Men working with shovels](https://via.placeholder.com/150x100.png?text=Men+Working+with+Shovels)  
+![](images/Men%20at%20work.png)  
 
 
 *This project is currently a work in progress.*
