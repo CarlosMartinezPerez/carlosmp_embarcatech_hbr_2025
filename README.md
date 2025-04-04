@@ -20,7 +20,7 @@ This is a personal project, not a course assignment, developed to enhance my ski
 
 This project reflects my initiative to explore advanced embedded system functionalities beyond the course scope, focusing on practical real-world applications.
 
-### Tuner (Phase 1 Final Task)
+### Tuner (afinador) - Phase 1 Final Task
 
 The **Tuner** project is the culminating assignment of Phase 1 of the Embarcatech 2025 training. It is an electronic tuner built on the **BitDogLab** platform, designed to tune a guitar using the **Yin algorithm** for pitch detection. This project demonstrates my understanding of signal processing and embedded programming.
 
