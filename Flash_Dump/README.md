@@ -1,7 +1,3 @@
-Below is a well-crafted `README.md` in English for your GitHub repository, describing the "Flash_Dump" project for the Raspberry Pi Pico (RP2040-based). It includes an overview, features, setup instructions, usage details, and more, all formatted in Markdown.
-
----
-
 # Flash_Dump
 
 ![Raspberry Pi Pico](https://www.raspberrypi.com/documentation/microcontrollers/images/pico-pinout.svg)  
@@ -103,7 +99,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - Built with the [Pico SDK](https://github.com/raspberrypi/pico-sdk) by Raspberry Pi.
 - Inspired by classic memory dump tools and embedded systems debugging techniques.
-
----
-
-Let me know if you'd like any adjustments or additional sections! Replace `yourusername` in the clone command with your actual GitHub username.
