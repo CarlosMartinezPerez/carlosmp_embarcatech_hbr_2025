@@ -29,7 +29,7 @@ The program initializes the RP2040's ADC and GPIO systems, reads the joystick's 
 The output is displayed every 100 ms to avoid overwhelming the serial monitor.
 
 ## Code Explanation
-The program (`joystick.c`) includes:
+The program (`joystick_conv.c`) includes:
 - **Libraries**:
   - `pico/stdlib.h`: For standard Pico SDK functions (GPIO, stdio).
   - `hardware/adc.h`: For ADC configuration and reading.
@@ -91,7 +91,7 @@ Eixo X: -17, Eixo Y: -74, Chave: 0
 
 4. **Flash the Firmware**:
    - Hold the BOOTSEL button on the BitDogLab board and connect it via USB.
-   - Copy the generated `joystick.uf2` file (in the `build` directory) to the RP2040's mass storage device.
+   - Copy the generated `joystick_conv.uf2` file (in the `build` directory) to the RP2040's mass storage device.
 
 5. **Monitor Output**:
    - Open a serial terminal (e.g., `minicom -D /dev/ttyACM0 -b 115200` or equivalent).
@@ -103,13 +103,13 @@ The provided `CMakeLists.txt` includes:
 ```cmake
 cmake_minimum_required(VERSION 3.13)
 include(pico_sdk_import.cmake)
-project(joystick_project C CXX ASM)
+project(joystick_conv C CXX ASM)
 pico_sdk_init()
-add_executable(joystick joystick.c)
-pico_enable_stdio_usb(joystick 1)
-pico_enable_stdio_uart(joystick 0)
-target_link_libraries(joystick pico_stdlib hardware_adc)
-pico_add_extra_outputs(joystick)
+add_executable(joystick_conv joystick_conv.c)
+pico_enable_stdio_usb(joystick_conv 1)
+pico_enable_stdio_uart(joystick_conv 0)
+target_link_libraries(joystick_conv pico_stdlib hardware_adc)
+pico_add_extra_outputs(joystick_conv)
 ```
 This configures the project for USB serial output and links the necessary Pico SDK libraries.
 
