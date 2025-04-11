@@ -14,6 +14,18 @@ Section 4.9.5.
 - CMake and a build system (e.g., Make)
 - Serial terminal (e.g., `minicom`, 115200 baud)
 
+## Some readings:  
+Temperatura: 39.31 °C  
+Temperatura: 36.03 °C  
+Temperatura: 34.63 °C  
+Temperatura: 40.71 °C  
+Temperatura: 37.44 °C  
+Temperatura: 40.71 °C  
+Temperatura: 36.50 °C  
+Temperatura: 37.44 °C  
+Temperatura: 37.91 °C  
+Temperatura: 34.16 °C  
+
 ## Build and Run
 1. Clone this repository:
    ```bash
