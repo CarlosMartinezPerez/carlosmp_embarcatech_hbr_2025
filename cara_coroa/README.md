@@ -1,6 +1,6 @@
 # Coin Flip Test with `rand()` in C
 
-This repository contains a small C program that simulates a coin flip to test the `rand()` function from the standard library for the absence of bias in "Heads" or "Tails" outcomes.
+This repository contains a small C program that simulates a coin flip to test the `rand()` function from the standard library for the absence of bias in "Heads" or "Tails" outcomes. It is part of the studies for the galton_board project.
 
 ## Source Code
 
@@ -73,7 +73,7 @@ ________________________________________________________________________________
 
 # Teste de Sorteio Cara ou Coroa com `rand()` em C
 
-Este repositório contém um pequeno programa em C que simula o lançamento de uma moeda para testar a função `rand()` da biblioteca padrão quanto à ausência de viés em sorteios de "Cara" ou "Coroa".
+Este repositório contém um pequeno programa em C que simula o lançamento de uma moeda para testar a função `rand()` da biblioteca padrão quanto à ausência de viés em sorteios de "Cara" ou "Coroa". Ele é parte dos estudos para o projeto galton_board.
 
 ## Código Fonte
 
