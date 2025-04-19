@@ -7,9 +7,10 @@
 
 int histogram[CHANNELS] = {0};
 int total_balls = 0;
+float left_prob = 50.0f; // Probabilidade inicial: 50% esquerda
 
 bool random_direction() {
-    return (get_rand_32() % 100) < 50;
+    return (get_rand_32() % 100) < left_prob; // Ex.: 60% esquerda -> true se rand < 60
 }
 
 void test_randomness(int trials) {
@@ -29,14 +30,12 @@ void calculate_statistics() {
         return;
     }
 
-    // Calcula a média
     float mean = 0.0f;
     for (int i = 0; i < CHANNELS; i++) {
         mean += (i + 1) * histogram[i];
     }
     mean /= total_balls;
 
-    // Calcula a variância e o desvio padrão
     float variance = 0.0f;
     for (int i = 0; i < CHANNELS; i++) {
         variance += histogram[i] * ((i + 1) - mean) * ((i + 1) - mean);
@@ -44,7 +43,6 @@ void calculate_statistics() {
     variance /= total_balls;
     float std_dev = sqrtf(variance);
 
-    // Exibe os resultados
     printf("Total de Bolas: %d\n", total_balls);
     printf("Bins: ");
     for (int i = 0; i < CHANNELS; i++) {
@@ -67,9 +65,9 @@ void update_ball(Ball *ball) {
     if (ball->collisions < 15 && ball->y >= (ball->collisions + 1) * (SSD1306_HEIGHT / 15.0f)) {
         bool dir = random_direction();
         if (dir) {
-            ball->x += 4.0f;
+            ball->x -= 4.0f; // Esquerda
         } else {
-            ball->x -= 4.0f;
+            ball->x += 4.0f; // Direita
         }
         ball->collisions++;
     }
@@ -87,4 +85,8 @@ void register_ball_landing(Ball *ball) {
         histogram[bin]++;
         total_balls++;
     }
+}
+
+float get_left_probability() {
+    return left_prob;
 }

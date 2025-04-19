@@ -21,5 +21,6 @@ void calculate_statistics();
 void init_ball(Ball *ball);
 void update_ball(Ball *ball);
 void register_ball_landing(Ball *ball);
+float get_left_probability();
 
 #endif

@@ -3,6 +3,10 @@
 #include "galton.h"
 #include "display.h"
 
+#define BUTTON_A 5
+#define BUTTON_B 6
+#define DEBOUNCE_MS 200
+
 /*
 int main() { // Função para teste de aleatoriedade durante o desenvolvimento
     stdio_init_all();
@@ -14,6 +18,13 @@ int main() {
     stdio_usb_init();
     sleep_ms(2000);
     printf("Iniciando Galton Board...\n");
+
+    gpio_init(BUTTON_A);
+    gpio_init(BUTTON_B);
+    gpio_set_dir(BUTTON_A, GPIO_IN);
+    gpio_set_dir(BUTTON_B, GPIO_IN);
+    gpio_pull_up(BUTTON_A);
+    gpio_pull_up(BUTTON_B);
 
     init_display();
 
@@ -27,8 +38,37 @@ int main() {
     }
     total_balls = 0;
 
+    extern float left_prob;
+    static uint32_t last_press_a = 0;
+    static uint32_t last_press_b = 0;
+    static bool last_state_a = true;
+    static bool last_state_b = true;
+
     int tick = 0;
     while (true) {
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        bool state_a = gpio_get(BUTTON_A);
+        bool state_b = gpio_get(BUTTON_B);
+
+        // Detecta borda de descida para botão A (1 -> 0)
+        if (!state_a && last_state_a && (now - last_press_a) > DEBOUNCE_MS) {
+            if (left_prob < 90.0f) {
+                left_prob += 10.0f;
+            }
+            last_press_a = now;
+        }
+
+        // Detecta borda de descida para botão B (1 -> 0)
+        if (!state_b && last_state_b && (now - last_press_b) > DEBOUNCE_MS) {
+            if (left_prob > 10.0f) {
+                left_prob -= 10.0f;
+            }
+            last_press_b = now;
+        }
+
+        last_state_a = state_a;
+        last_state_b = state_b;
+
         if (tick % 5 == 0) {
             for (int i = 0; i < MAX_BALLS; i++) {
                 if (!balls[i].active) {

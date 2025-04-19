@@ -6,6 +6,4 @@ pico_sdk_import.cmake
 test_neopixel.c
 CMakeListsb.txt
 src1/
-README.md
-
-
+read

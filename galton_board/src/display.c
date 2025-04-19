@@ -81,6 +81,15 @@ void draw_ball(Ball *ball) {
     }
 }
 
+void draw_probabilities(float left_prob) {
+    char left_buffer[8];
+    char right_buffer[8];
+    snprintf(left_buffer, sizeof(left_buffer), "%.0f%%", left_prob);
+    snprintf(right_buffer, sizeof(right_buffer), "%.0f%%", 100.0f - left_prob);
+    ssd1306_draw_string(display_buffer, 0, 28, left_buffer); // Esquerda, y=28
+    ssd1306_draw_string(display_buffer, 104, 28, right_buffer); // Direita, ajustado para caber
+}
+
 void update_display(Ball *balls, int ball_count, int *histogram) {
     clear_display_buffer();
     for (int i = 0; i < ball_count; i++) {
@@ -90,6 +99,7 @@ void update_display(Ball *balls, int ball_count, int *histogram) {
     char buffer[16];
     snprintf(buffer, sizeof(buffer), "Bolas: %d", total_balls);
     ssd1306_draw_string(display_buffer, 0, 0, buffer);
+    draw_probabilities(get_left_probability());
     ssd1306_update_display();
 }
 
