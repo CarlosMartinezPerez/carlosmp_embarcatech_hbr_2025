@@ -1,0 +1,11 @@
+build/
+bkup/
+extras/
+pico_sdk_import.cmake
+.vscode/
+test_neopixel.c
+CMakeListsb.txt
+src1/
+README.md
+
+
