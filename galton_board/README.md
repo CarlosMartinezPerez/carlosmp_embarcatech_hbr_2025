@@ -67,11 +67,11 @@ O projeto é composto por seis arquivos principais:
 
 **CMakeLists.txt**:  
 O arquivo CMakeLists.txt é usado para configurar o processo de compilação do projeto, definindo as instruções para o CMake, uma ferramenta de construção, especificando:  
-    - O nome do projeto e a versão do CMake necessária.  
-    - Os arquivos-fonte (ex.: main.c, galton.c, display.c) a serem compilados.  
-    - As bibliotecas do Pico SDK (ex.: pico_stdlib, hardware_i2c) a serem vinculadas.  
-    - Configurações como suporte a USB e UART para saída serial.  
-    - Geração do executável para o Raspberry Pi Pico.  
+   - O nome do projeto e a versão do CMake necessária.  
+   - Os arquivos-fonte (ex.: main.c, galton.c, display.c) a serem compilados.  
+   - As bibliotecas do Pico SDK (ex.: pico_stdlib, hardware_i2c) a serem vinculadas.  
+   - Configurações como suporte a USB e UART para saída serial.  
+   - Geração do executável para o Raspberry Pi Pico.  
 
 ### Detalhes Técnicos
 - **Display**: O SSD1306 é controlado via I2C, com buffer para renderizar bolinhas (pixels individuais) e histograma (retângulos por bin).
