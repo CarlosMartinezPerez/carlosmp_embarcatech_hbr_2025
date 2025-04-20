@@ -139,7 +139,7 @@ int main() { // Função para teste de aleatoriedade durante o desenvolvimento
 }*/
 ```
 
-Como parte de resposta a uma demanda do projeto, este trecho, presente em um bloco comentado no código, representa uma função main() alternativa utilizada no início do desenvolvimento para testar a qualidade do gerador de números aleatórios do projeto. A função inicializa a comunicação serial com stdio_init_all(), aguarda 2000 milissegundos (sleep_ms(2000)) para permitir a conexão com um monitor serial, e chama test_randomness(100000), que executa 100.000 iterações da função random_direction para verificar se as probabilidades de desvio à esquerda e à direita estão equilibradas (ex.: ~50% para cada lado com a configuração padrão). Os resultados são exibidos no monitor serial, mostrando a contagem e a porcentagem de desvios à esquerda e à direita. Embora comentado na versão final, esse teste foi essencial para validar a aleatoriedade do sistema, garantindo que a distribuição binomial da simulação refletisse corretamente as probabilidades esperadas.  
+Como resposta a uma demanda específica do projeto, este trecho, presente em um bloco comentado no código, representa uma função main() alternativa utilizada no início do desenvolvimento para testar a qualidade do gerador de números aleatórios do projeto. A função inicializa a comunicação serial com stdio_init_all(), aguarda 2000 milissegundos (sleep_ms(2000)) para permitir a conexão com um monitor serial, e chama test_randomness(100000), que executa 100.000 iterações da função random_direction para verificar se as probabilidades de desvio à esquerda e à direita estão equilibradas (ou seja, aproximadamente 50% para cada lado com a configuração padrão). Os resultados são exibidos no monitor serial, mostrando a contagem e a porcentagem de desvios à esquerda e à direita. Embora comentado na versão final, esse teste foi importante para validar a aleatoriedade do sistema, garantindo que a distribuição binomial da simulação refletisse corretamente as probabilidades esperadas.  
 
 
 Resultado dos teste de aleatoriedade realizados com as funções `test_randomness` e `random_direction` presentes em galton.c (explicado mais adiante):  
@@ -219,6 +219,7 @@ Inicializa os pinos GPIO 5 e 6, ligados aos botões A e B da placa, como saída 
 for (int i = 0; i < CHANNELS; i++) {
         histogram[i] = 0;
     }
+    total_balls = 0;
 ```
 * `for (int i = 0; i < CHANNELS; i++) {...}`: Inicia um laço que itera, de i = 0 até i < CHANNELS (CHANNELS é 16, definido em galton.h), sobre os elemento do array `histogram`.
 * `histogram[i] = 0;`: Define o valor do elemento histogram[i] como 0. O array histogram (declarado em galton.c) armazena a contagem de bolas em cada um dos 16 bins. Este comando zera todas as contagens, inicializando o histograma para a simulação.  
@@ -226,6 +227,14 @@ for (int i = 0; i < CHANNELS; i++) {
 * `total_balls = 0;`: Inicializa a variável global total_balls (declarada em galton.c) como 0. Essa variável rastreia o número total de bolas que caíram nos bins, usada no cálculo de estatísticas como média e desvio padrão exibidas no monitor serial a cada 100 bolas. Ela também aparece no topo do display OLED SSD1306 para informar o total de simulações.
 
 **Definições Extras:**  
+
+```c
+extern float left_prob;
+static uint32_t last_press_a = 0;
+static uint32_t last_press_b = 0;
+static bool last_state_a = true;
+static bool last_state_b = true;
+´´´
 
 * `extern float left_prob;`: Declara que a variável left_prob (definida em galton.c) é externa, permitindo seu acesso em main.c. left_prob armazena a probabilidade de uma bolinha desviar à esquerda (ex.: 50.0f para 50%, 70.0f para 70%), ajustada pelos botões A e B.  
 
