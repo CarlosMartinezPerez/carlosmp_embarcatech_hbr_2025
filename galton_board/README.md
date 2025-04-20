@@ -43,25 +43,25 @@ O código é organizado em módulos para promover clareza, reusabilidade e manut
 - **Depuração**: Isolamento de erros em módulos específicos agiliza a correção.
 
 ### Estrutura do Código
-O projeto é composto por seis arquivos principais:
-**galton.c / galton.h**:
-   - Contém a lógica da simulação do Tabuleiro de Galton.
-   - Funções principais:
-     - `init_ball`: Inicializa uma bolinha no centro (x = 64, y = 0).
-     - `update_ball`: Move a bolinha verticalmente e realiza desvios horizontais (±4 pixels) em 15 colisões.
-     - `register_ball_landing`: Registra a bolinha em um bin e atualiza o histograma.
-     - `calculate_statistics`: Calcula e exibe (a cada 100 bolas) o total de bolas, contagem por bin, média e desvio padrão.
-     - `test_randomness`: Testa a aleatoriedade do gerador (`random_direction`), útil para depuração.
-   - Variáveis globais: `histogram` (contagem de bolas por bin) e `total_balls` (total acumulado).
-**main.c**:
-   - Orquestra a simulação, inicializando o display, gerenciando até 10 bolinhas ativas e chamando `calculate_statistics` a cada 100 bolas.
-   - Loop principal: Atualiza bolinhas, registra quedas e refresca o display a cada 50ms.
-**display.c / display.h**:
-   - Gerencia o display OLED SSD1306.
-   - Funções principais:
-     - `init_display`: Configura o display.
-     - `draw_histogram`: Desenha o histograma com altura proporcional às bolas (escala: 1 pixel por 2 bolas).
-     - `update_display`: Atualiza o display com bolinhas e histograma.
+O projeto é composto por seis arquivos principais:  
+**galton.c / galton.h**:  
+   - Contém a lógica da simulação do Tabuleiro de Galton.  
+   - Funções principais:  
+     - `init_ball`: Inicializa uma bolinha no centro (x = 64, y = 0).  
+     - `update_ball`: Move a bolinha verticalmente e realiza desvios horizontais (±4 pixels) em 15 colisões.  
+     - `register_ball_landing`: Registra a bolinha em um bin e atualiza o histograma.  
+     - `calculate_statistics`: Calcula e exibe (a cada 100 bolas) o total de bolas, contagem por bin, média e desvio padrão.  
+     - `test_randomness`: Testa a aleatoriedade do gerador (`random_direction`), útil para depuração.  
+   - Variáveis globais: `histogram` (contagem de bolas por bin) e `total_balls` (total acumulado).  
+**main.c**:  
+   - Orquestra a simulação, inicializando o display, gerenciando até 10 bolinhas ativas e chamando `calculate_statistics` a cada 100 bolas.  
+   - Loop principal: Atualiza bolinhas, registra quedas e refresca o display a cada 50ms.  
+**display.c / display.h**:  
+   - Gerencia o display OLED SSD1306.  
+   - Funções principais:  
+     - `init_display`: Configura o display.  
+     - `draw_histogram`: Desenha o histograma com altura proporcional às bolas (escala: 1 pixel por 2 bolas).  
+     - `update_display`: Atualiza o display com bolinhas e histograma.  
 **CMakeLists.txt**:  
 O arquivo CMakeLists.txt é usado para configurar o processo de compilação do projeto, definindo as instruções para o CMake, uma ferramenta de construção, especificando:  
     - O nome do projeto e a versão do CMake necessária.  
