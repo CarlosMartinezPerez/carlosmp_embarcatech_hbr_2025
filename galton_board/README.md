@@ -15,11 +15,11 @@ A simulação digital desenvolvida neste projeto recria o comportamento de um Ta
 ### Estrutura da Simulação
 - **Display e Bins**: Os 128 pixels horizontais do display são divididos em 16 bins, cada um com 8 pixels de largura (128 ÷ 16 = 8). Esses bins, localizados na base do display, acumulam as bolinhas após sua queda.
 - **Pinos e Fileiras**: Acima dos bins, há 15 fileiras de pinos dispostos em um padrão triangular (15 pinos na primeira fileira, 14 na segunda, e assim por diante). Como o display tem 64 pixels de altura, as fileiras de pinos seriam teoricamente espaçadas por ~4,27 pixels (64 ÷ 15), mas isso é insuficiente para uma bolinha de ~6 pixels de diâmetro passar sem ficar presa. Assim, as fileiras superiores são consideradas fora da tela, e a simulação foca na trajetória das bolinhas.
-- **Geometria dos Pinos**: Os pinos formam triângulos equiláteros com lados de 8 pixels. A distância vertical entre fileiras é calculada como a altura de um triângulo equilátero de lado 9, ou 4 vezes a raiz quadrada de 3 ou aproximadamente 6,93 pixels (7 pixels), mas a simulação abstrai isso para manter a lógica simples.
+- **Geometria dos Pinos**: Os pinos formam triângulos equiláteros com lados de 8 pixels. A distância vertical entre fileiras é calculada como a altura de um triângulo equilátero de lado 8, ou 4 vezes a raiz quadrada de 3, aproximadamente 6,93 (7 pixels), mas a simulação abstrai isso para manter a lógica simples.
 - **Comportamento das Bolinhas**: Cada bolinha começa no centro (x = 64) e sofre 15 colisões, desviando aleatoriamente ±4 pixels (para a esquerda ou para a direita) por colisão, com 50% de chance para cada direção. Após 15 colisões, a bolinha cai em um dos 16 bins.
 - **Casos Extremos**:
-  - Máximo à direita: \( 64 + 15 \cdot 4 = 124 \) (bin 16).
-  - Máximo à esquerda: \( 64 - 15 \cdot 4 = 4 \) (bin 1).
+  - Máximo à direita: \( 64 + 15 x 4 = 124 \) (bin 16).
+  - Máximo à esquerda: \( 64 - 15 x 4 = 4 \) (bin 1).
 - **Visualização**: As bolinhas são exibidas como pontos no display durante a queda, e o histograma na base é desenhado com quadrados, onde cada 2 bolas incrementam 1 pixel de altura (escala ajustada para evitar preenchimento muito rápido da tela).
 - **Saída Serial**: A cada 100 bolas, o programa exibe:
   - Total de bolas.
@@ -31,7 +31,7 @@ A simulação digital desenvolvida neste projeto recria o comportamento de um Ta
 ### Características
 - A simulação utiliza o gerador de números aleatórios do Pico (`get_rand_32`) para garantir desvios aleatórios.
 - Até 10 bolinhas podem estar ativas simultaneamente, caindo em uma "chuva" contínua.
-- A probabilidade teórica de uma bolinha cair nos bins extremos (1 ou 16) é \( \frac{1}{2^{15}} \approx 0,003\% \). Só existe uma maneira de uma bolinha atingir o bin 16, ela tem que desviar à direita nas 15 colisões. Já para chegar aos bins 8 ou 9 (centrais), a bolinha tem 6435 caminhos diferentes para fazer. O cálculo dessa probabilidade é P(m) = \binom{15}{m} \cdot (0.5)^{15}, \quad \text{onde } m = 7 \text{ ou } 8, \quad \binom{15}{7} = \binom{15}{8} = 6435, \quad P(\text{bin 8}) = 6435 \cdot \frac{1}{2^{15}} \approx 0.1964 \approx 19.64\%. A diferença nessas probabilidades reflete bem a natureza binomial da simulação.
+- A probabilidade teórica de uma bolinha cair nos bins extremos (1 ou 16) é 1 sobre 2 elevado a 15 vezes 100% ou 0,003%. Só existe uma maneira de uma bolinha atingir o bin 16, ela tem que desviar à direita nas 15 colisões. Já para chegar aos bins 8 ou 9 (centrais), a bolinha tem 6435 caminhos diferentes para fazer. O cálculo dessa probabilidade é dado pela combinação de 15, 7 a 7, vezes 1 sobre 2 elevado a 15 vezes 100% ou 6435 vezes 0,003%, ou aproximadamente 19.64\%. A diferença nessas probabilidades reflete bem a natureza binomial da simulação.
 
 ## 3. Análise do Código
 
@@ -43,8 +43,8 @@ O código é organizado em módulos para promover clareza, reusabilidade e manut
 - **Depuração**: Isolamento de erros em módulos específicos agiliza a correção.
 
 ### Estrutura do Código
-O projeto é composto por quatro arquivos principais:
-1. **galton.c / galton.h**:
+O projeto é composto por seis arquivos principais:
+**galton.c / galton.h**:
    - Contém a lógica da simulação do Tabuleiro de Galton.
    - Funções principais:
      - `init_ball`: Inicializa uma bolinha no centro (x = 64, y = 0).
@@ -53,16 +53,22 @@ O projeto é composto por quatro arquivos principais:
      - `calculate_statistics`: Calcula e exibe (a cada 100 bolas) o total de bolas, contagem por bin, média e desvio padrão.
      - `test_randomness`: Testa a aleatoriedade do gerador (`random_direction`), útil para depuração.
    - Variáveis globais: `histogram` (contagem de bolas por bin) e `total_balls` (total acumulado).
-2. **main.c**:
+**main.c**:
    - Orquestra a simulação, inicializando o display, gerenciando até 10 bolinhas ativas e chamando `calculate_statistics` a cada 100 bolas.
    - Loop principal: Atualiza bolinhas, registra quedas e refresca o display a cada 50ms.
-3. **display.c / display.h**:
+**display.c / display.h**:
    - Gerencia o display OLED SSD1306.
    - Funções principais:
      - `init_display`: Configura o display.
      - `draw_histogram`: Desenha o histograma com altura proporcional às bolas (escala: 1 pixel por 2 bolas).
      - `update_display`: Atualiza o display com bolinhas e histograma.
-4. **Outros**: Dependências do SDK Pico (ex.: `pico/stdlib.h`, `pico/rand.h`) para inicialização, aleatoriedade e I/O.
+**CMakeLists.txt**:  
+O arquivo CMakeLists.txt é usado para configurar o processo de compilação do projeto, definindo as instruções para o CMake, uma ferramenta de construção, especificando:  
+    - O nome do projeto e a versão do CMake necessária.  
+    - Os arquivos-fonte (ex.: main.c, galton.c, display.c) a serem compilados.  
+    - As bibliotecas do Pico SDK (ex.: pico_stdlib, hardware_i2c) a serem vinculadas.  
+    - Configurações como suporte a USB e UART para saída serial.  
+    - Geração do executável para o Raspberry Pi Pico.  
 
 ### Detalhes Técnicos
 - **Display**: O SSD1306 é controlado via I2C, com buffer para renderizar bolinhas (pixels individuais) e histograma (retângulos por bin).
@@ -71,10 +77,10 @@ O projeto é composto por quatro arquivos principais:
 - **Aleatoriedade**: O `get_rand_32` garante desvios uniformes (50% esquerda, 50% direita), validados pela função `test_randomness`.
 
 ### Resultados Esperados
-A simulação produz uma distribuição binomial, com média próxima a 8.5 (centro dos 16 bins) e desvio padrão ~2, refletindo as 15 colisões com probabilidade 50%. Após 975 bolas, por exemplo, observou-se:
+A simulação produz uma distribuição binomial, com média próxima a 8.5 (centro dos 16 bins) e desvio padrão próximo a 2, refletindo as 15 colisões com probabilidade de 50%. Após 975 bolas, por exemplo, observou-se:
 - Média: ~8.49
 - Desvio Padrão: ~1.87
-- Pico nos bins 8-9, com zero bolas nos extremos (bins 1 e 16), consistente com a probabilidade teórica de \( \frac{1}{2^{15}} \).
+- Pico nos bins 8-9, com zero bolas nos extremos (bins 1 e 16), consistente com a probabilidade teórica de 0,003%.
 
 ## Como Executar
 1. **Hardware**:
@@ -111,7 +117,7 @@ A simulação produz uma distribuição binomial, com média próxima a 8.5 (cen
 
 **2. Definições:**  
 
-```
+```c
 #define BUTTON_A 5
 #define BUTTON_B 6
 #define DEBOUNCE_MS 200
@@ -121,7 +127,7 @@ Este trecho define constantes necessárias para a interação com o hardware. As
 
 **3. Teste da Aleatoriedade:**
 
-```
+```c
 /*
 int main() { // Função para teste de aleatoriedade durante o desenvolvimento
     stdio_init_all();
@@ -181,7 +187,7 @@ int main() {
 * `stdio_init_all();`: Uma função fornecida pelo SDK do Pico. Ela inicializa os periféricos de entrada e saída padrão. Na maioria dos casos, isso configura a comunicação serial (UART) para que se possa usar `printf` para enviar dados para o monitor serial do seu computador.
 * `sleep_ms(2000);`: Outra função do SDK do Pico. Ela pausa a execução do programa pelo número de milissegundos especificado (neste caso, 2000 ms ou 2 segundos). Isso é comumente usado para dar tempo para que o monitor serial da IDE seja conectado e esteja pronto para receber a saída antes que o programa comece a enviar dados.
 * `printf("Iniciando Galton Board...\n");`: Imprime uma mensagem de inicialização no monitor serial.  
-```
+```c
 gpio_init(BUTTON_A);
 gpio_init(BUTTON_B);
 gpio_set_dir(BUTTON_A, GPIO_IN);
@@ -206,7 +212,7 @@ Inicializa os pinos GPIO 5 e 6, ligados aos botões A e B da placa, como saída 
 
 **Inicialização do Histograma e da Contagem de Bolinhas:**
 
-```
+```c
 for (int i = 0; i < CHANNELS; i++) {
         histogram[i] = 0;
     }
