@@ -234,7 +234,7 @@ static uint32_t last_press_a = 0;
 static uint32_t last_press_b = 0;
 static bool last_state_a = true;
 static bool last_state_b = true;
-´´´
+```
 
 * `extern float left_prob;`: Declara que a variável left_prob (definida em galton.c) é externa, permitindo seu acesso em main.c. left_prob armazena a probabilidade de uma bolinha desviar à esquerda (ex.: 50.0f para 50%, 70.0f para 70%), ajustada pelos botões A e B.  
 
@@ -244,7 +244,7 @@ static bool last_state_b = true;
 
 * `static bool last_state_a = true;`: Declara uma variável estática last_state_a do tipo bool, inicializada como true. Representa o último estado lido do botão A (GPIO 5), onde true indica não pressionado (devido ao pull-up interno) e false indica pressionado. Usada para detectar a borda de descida (transição de true para false) e evitar múltiplas leituras durante uma pressão.
 
-* `static bool last_state_b = true;^: Similar a last_state_a, mas para o botão B (GPIO 6). Armazena o último estado do botão B, também para detectar a borda de descida no mecanismo de debounce.
+* `static bool last_state_b = true;`: Similar a last_state_a, mas para o botão B (GPIO 6). Armazena o último estado do botão B, também para detectar a borda de descida no mecanismo de debounce.
 
 * `int tick = 0;`: Cria e inicializa um contador (tick) que rastreia o número de iterações do loop principal, incrementado a cada 50ms. Ele controla a criação de novas bolinhas a cada 250ms, essencial para a dinâmica da simulação do Tabuleiro de Galton.
 
