@@ -255,7 +255,17 @@ static bool last_state_b = true;
         uint32_t now = to_ms_since_boot(get_absolute_time());
         bool state_a = gpio_get(BUTTON_A);
         bool state_b = gpio_get(BUTTON_B);
+```
+*`while (true) {`: Inicia o loop principal do programa Galton Board, que executa continuamente (while (true)). Nele, são executados:  
 
+*`uint32_t now = to_ms_since_boot(get_absolute_time())`;: Obtém o tempo atual em milissegundos desde o início do programa, armazenado em now, para gerenciar debounce e temporização.  
+
+*`bool state_a = gpio_get(BUTTON_A);`: Lê o estado do botão A (GPIO 5), retornando false (pressionado) ou true (não pressionado, devido ao pull-up).  
+
+*`bool state_b = gpio_get(BUTTON_B);`: Lê o estado do botão B (GPIO 6), de forma semelhante.
+Esses comandos monitoram os botões para ajustar as probabilidades e controlam a sincronização do loop, que atualiza a simulação a cada 50ms.  
+
+```c
         // Detecta borda de descida para botão A (1 -> 0)
         if (!state_a && last_state_a && (now - last_press_a) > DEBOUNCE_MS) {
             if (left_prob < 90.0f) {
@@ -274,7 +284,34 @@ static bool last_state_b = true;
 
         last_state_a = state_a;
         last_state_b = state_b;
+```
+Este trecho implementa a lógica de detecção de pressão dos botões A e B com debounce, ajustando as probabilidades de desvio das bolinhas.  
 
+*`if (!state_a && last_state_a && (now - last_press_a) > DEBOUNCE_MS) {`: Verifica se o botão A foi pressionado (`!state_a`), se estava não pressionado antes (`last_state_a`) e se passararm mais de 200ms desde a última pressão (`now - last_press_a > DEBOUNCE_MS`), garantindo debounce.  
+
+*`if (left_prob < 90.0f) {`: Checa se a probabilidade de desvio à esquerda (`left_prob`) é menor que 90%, evitando ultrapassar o limite máximo.  
+
+*`left_prob += 10.0f;`: Incrementa `left_prob` em 10% (ex.: de 50% para 60%), aumentando a chance de desvio à esquerda.  
+
+*`last_press_a = now;`: Atualiza o timestamp da última pressão do botão A com o tempo atual (`now`), para o próximo ciclo de debounce.  
+
+*`}`: Fecha o bloco condicional do botão A.
+
+*`if (!state_b && last_state_b && (now - last_press_b) > DEBOUNCE_MS) {`**: Verifica se o botão B foi pressionado (`!state_b`), se estava não pressionado antes (`last_state_b`) e se passaram mais de 200ms desde a última pressão, para debounce.  
+
+*`if (left_prob > 10.0f) {`: Checa se `left_prob` é maior que 10%, evitando ultrapassar o limite mínimo.  
+
+*`left_prob -= 10.0f;`**: Decrementa `left_prob` em 10% (ex.: de 50% para 40%), aumentando a chance de desvio à direita.  
+
+*`last_press_b = now;`: Atualiza o timestamp da última pressão do botão B com o tempo atual.  
+
+*`}`: Fecha o bloco condicional do botão B.  
+
+*`last_state_a = state_a;`: Armazena o estado atual do botão A (`state_a`) em `last_state_a` para a próxima iteração, permitindo detectar a próxima borda de descida.  
+
+*`last_state_b = state_b;`: Armazena o estado atual do botão B (`state_b`) em `last_state_b` para a próxima iteração.  
+
+```c
         if (tick % 5 == 0) {
             for (int i = 0; i < MAX_BALLS; i++) {
                 if (!balls[i].active) {
@@ -283,7 +320,26 @@ static bool last_state_b = true;
                 }
             }
         }
+```
+Este trecho controla a criação de novas bolinhas na simulação, adicionando uma nova bolinha à simulação a cada 250ms, se houver uma bolinha inativa no array `balls` (máximo de 10 bolinhas ativas). Assim, ele garante a "chuva" contínua de bolinhas no Tabuleiro de Galton.
 
+*`if (tick % 5 == 0) {`: Verifica se o contador `tick` (incrementado a cada 50ms) é divisível por 5, ou seja, a cada 250ms (5 × 50ms), executa o bloco para adicionar uma nova bolinha.  
+
+*`for (int i = 0; i < MAX_BALLS; i++) {`: Inicia um laço que itera sobre o array `balls` (tamanho `MAX_BALLS = 10`), buscando uma bolinha inativa.  
+
+*`if (!balls[i].active) {`: Checa se a bolinha na posição `i` não está ativa (`active = false`), indicando que pode ser usada.  
+
+*`init_ball(&balls[i]);`: Chama a função `init_ball` (definida em `galton.c`) para inicializar a bolinha `balls[i]`, definindo sua posição inicial (x=64, y=0), ativando-a (`active = true`) e zerando colisões.  
+
+*`break;`: Sai do laço `for` após ativar uma bolinha, evitando inicializar múltiplas bolinhas no mesmo ciclo.  
+
+*`}`: Fecha o bloco condicional da verificação de bolinha inativa.  
+
+*`}`: Fecha o laço `for`.  
+
+*`}`: Fecha o bloco condicional de `tick`.
+
+```c
         for (int i = 0; i < MAX_BALLS; i++) {
             if (balls[i].active) {
                 update_ball(&balls[i]);
@@ -295,7 +351,33 @@ static bool last_state_b = true;
                 }
             }
         }
+```
+Este trecho gerencia a atualização das bolinhas ativas na simulação. Ele atualiza todas as bolinhas ativas a cada iteração do loop principal (~50ms), movendo-as e processando colisões. Quando uma bolinha atinge o fundo, ela é registrada no histograma, e a cada 100 bolinhas, estatísticas são calculadas e exibidas serialmente, atualizando a simulação do Tabuleiro de Galton.
 
+*`for (int i = 0; i < MAX_BALLS; i++) {`: Inicia um laço que itera sobre o array `balls` (tamanho `MAX_BALLS = 10`), verificando cada bolinha.  
+
+*`if (balls[i].active) {`: Checa se a bolinha na posição `i` está ativa (`active = true`), indicando que está caindo na simulação.  
+
+*`update_ball(&balls[i]);`: Chama `update_ball` (em `galton.c`) para atualizar a bolinha, movendo-a verticalmente (incrementa `y`), aplicando desvios horizontais (±4 pixels) nas colisões, e desativando-a (`active = false`) se atingir o fundo (y ≥ 64).  
+
+*`if (!balls[i].active) {`: Verifica se a bolinha foi desativada após `update_ball` (ou seja, chegou ao fundo).  
+
+*`register_ball_landing(&balls[i]);`: Chama `register_ball_landing` (em `galton.c`) para registrar a bolinha no bin correspondente (baseado em `x`), incrementando `histogram[bin]` e `total_balls`.  
+
+*`if (total_balls % 100 == 0 && total_balls > 0) {`: Checa se o número total de bolas (`total_balls`) é divisível por 100 e maior que 0, indicando que 100 bolas caíram desde a última estatística.  
+
+*`calculate_statistics();`**: Chama `calculate_statistics` (em `galton.c`) para calcular e exibir via serial o total de bolas, contagem por bin, média e desvio padrão.  
+
+*`}`: Fecha o bloco condicional de estatísticas.  
+
+*`}`: Fecha o bloco condicional de bolinha desativada.  
+
+*`}`: Fecha o bloco condicional de bolinha ativa.  
+
+*`}`: Fecha o laço `for`.
+
+
+```c
         for (int i = 0; i < CHANNELS; i++) {
             if (histogram[i] < 0) histogram[i] = 0;
         }
@@ -308,4 +390,22 @@ static bool last_state_b = true;
     return 0;
 }
 ```
+Este trecho finaliza o loop principal, garantindo a integridade do histograma, atualizando o display e controlando a temporização.  
 
+*`for (int i = 0; i < CHANNELS; i++) {`: Inicia um laço que itera sobre os 16 bins do array `histogram` (`CHANNELS = 16`, definido em `galton.h`).  
+
+*`if (histogram[i] < 0) histogram[i] = 0;`: Verifica se o valor de `histogram[i]` é negativo (um erro improvável, mas possível em depuração) e, se for, corrige para 0, garantindo que o histograma tenha contagens válidas.  
+
+*`}`: Fecha o laço `for`.  
+
+*`update_display(balls, MAX_BALLS, histogram);`: Chama `update_display` (em `display.c`) para atualizar o display OLED, desenhando as bolinhas ativas (`balls`), o histograma (`histogram`, escala `histogram[i] / 2`), o contador de bolas (`total_balls`) e as probabilidades (ex.: "60%" à esquerda, "40%" à direita).  
+
+*`tick++;`: Incrementa o contador `tick`, que rastreia o número de iterações do loop principal, usado para temporizar a criação de novas bolinhas (a cada 250ms, quando `tick % 5 == 0`).  
+
+*`sleep_ms(50);`: Pausa a execução por 50 milissegundos, garantindo que o loop principal execute a cada ~50ms, controlando a taxa de atualização da simulação.  
+
+*`}`: Fecha o loop `while (true)`, que continua indefinidamente.  
+
+*`return 0;`: Indica o término bem-sucedido da função `main` (embora nunca seja alcançado, devido ao `while (true)`).  
+
+*`}`: Fecha a função `main`.  
