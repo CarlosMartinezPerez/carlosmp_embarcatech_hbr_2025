@@ -85,7 +85,7 @@ A simulação produz uma distribuição binomial, com média próxima a 8.5 (cen
 - Desvio Padrão: ~1.87
 - Pico nos bins 8-9, com zero bolas nos extremos (bins 1 e 16), consistente com a probabilidade teórica de 0,003%.
 
-## Como Executar
+### Como Executar
 1. **Hardware**:
    - Raspberry Pi Pico (ou Pico W).
    - Display OLED SSD1306 (128x64, conectado via I2C).
@@ -100,7 +100,7 @@ A simulação produz uma distribuição binomial, com média próxima a 8.5 (cen
    - Visualize a chuva de bolinhas e o histograma no display.
    - Conecte-se ao monitor serial (ex.: `minicom`, 115200 baud) para ver estatísticas a cada 100 bolas.
 
-## Análise do Código:
+### Explicação do Código:
 
 #### Orquestrador main.c:
 
@@ -201,7 +201,7 @@ gpio_pull_up(BUTTON_B);
 Inicializa os pinos GPIO 5 e 6, ligados aos botões A e B da placa, como saída com pull up resistor.
 * `init_display();`: Chama uma função definida no arquivo `display.c` (cujo protótipo está em `display.h`). Esta função inicializa o display SSD1306 e será explicada mais adiante.  
 
-**Inicialização das Bolinhas:**
+**5. Inicialização das Bolinhas:**
 
 ```c
     Ball balls[MAX_BALLS];
@@ -213,7 +213,7 @@ Inicializa os pinos GPIO 5 e 6, ligados aos botões A e B da placa, como saída 
 * `for (int i = 0; i < MAX_BALLS; i++) { ... }`: Inicia um loop que itera sobre cada elemento do array `balls`.
 * `balls[i].active = false;`: Inicializa cada bolinha, definindo active = false, garantindo que nenhuma esteja ativa no início da simulação. Isso prepara o sistema para ativar bolinhas dinamicamente durante a "chuva de bolinhas".  
 
-**Inicialização do Histograma e da Contagem de Bolinhas:**
+**6. Inicialização do Histograma e da Contagem de Bolinhas:**
 
 ```c
 for (int i = 0; i < CHANNELS; i++) {
@@ -226,7 +226,7 @@ for (int i = 0; i < CHANNELS; i++) {
 
 * `total_balls = 0;`: Inicializa a variável global total_balls (declarada em galton.c) como 0. Essa variável rastreia o número total de bolas que caíram nos bins, usada no cálculo de estatísticas como média e desvio padrão exibidas no monitor serial a cada 100 bolas. Ela também aparece no topo do display OLED SSD1306 para informar o total de simulações.
 
-**Definições Extras:**  
+**7. Definições Extras:**  
 
 ```c
 extern float left_prob;
@@ -248,7 +248,7 @@ static bool last_state_b = true;
 
 * `int tick = 0;`: Cria e inicializa um contador (tick) que rastreia o número de iterações do loop principal, incrementado a cada 50ms. Ele controla a criação de novas bolinhas a cada 250ms, essencial para a dinâmica da simulação do Tabuleiro de Galton.
 
-**Loop Principal de Simulação:**
+**8. Loop Principal da Simulação:**
 
 ```c
     while (true) {
@@ -409,3 +409,253 @@ Este trecho finaliza o loop principal, garantindo a integridade do histograma, a
 *`return 0;`: Indica o término bem-sucedido da função `main` (embora nunca seja alcançado, devido ao `while (true)`).  
 
 *`}`: Fecha a função `main`.  
+
+#### Simulador galton.c:
+
+**1. Includes**:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "pico/stdlib.h"
+#include "pico/rand.h"
+#include "galton.h"
+```
+
+
+**2. Definições**:
+
+```c
+int histogram[CHANNELS] = {0};
+int total_balls = 0;
+float left_prob = 50.0f; // Probabilidade inicial: 50% esquerda
+```
+
+
+**3. Função random_direction()**:
+
+```c
+bool random_direction() {
+    return (get_rand_32() % 100) < left_prob; // Ex.: 60% esquerda -> true se rand < 60
+}
+```
+**4. Função test_randomness()**:
+
+```c
+void test_randomness(int trials) {
+    int left = 0, right = 0;
+    for (int i = 0; i < trials; i++) {
+        if (random_direction() == 0) left++;
+        else right++;
+    }
+    printf("Esquerda: %d (%.2f%%), Direita: %d (%.2f%%)\n",
+            left, (float)left / trials * 100,
+            right, (float)right / trials * 100);
+}
+```
+
+**5. Função calculate_statistics()**:
+
+```c
+void calculate_statistics() {
+    if (total_balls == 0) {
+        printf("Nenhuma bola registrada.\n");
+        return;
+    }
+
+    float mean = 0.0f;
+    for (int i = 0; i < CHANNELS; i++) {
+        mean += (i + 1) * histogram[i];
+    }
+    mean /= total_balls;
+
+    float variance = 0.0f;
+    for (int i = 0; i < CHANNELS; i++) {
+        variance += histogram[i] * ((i + 1) - mean) * ((i + 1) - mean);
+    }
+    variance /= total_balls;
+    float std_dev = sqrtf(variance);
+
+    printf("Total de Bolas: %d\n", total_balls);
+    printf("Bins: ");
+    for (int i = 0; i < CHANNELS; i++) {
+        printf("[%d]: %d ", i + 1, histogram[i]);
+    }
+    printf("\nMédia: %.2f\nDesvio Padrão: %.2f\n", mean, std_dev);
+}
+```
+
+**6. Função init_ball()**:
+
+```c
+void init_ball(Ball *ball) {
+    ball->x = SSD1306_WIDTH / 2.0f;
+    ball->y = 0.0f;
+    ball->active = true;
+    ball->collisions = 0;
+}
+```
+
+**7. Função update_ball()**:
+
+```c
+void update_ball(Ball *ball) {
+    if (!ball->active) return;
+
+    ball->y += 1.0f;
+    if (ball->collisions < 15 && ball->y >= (ball->collisions + 1) * (SSD1306_HEIGHT / 15.0f)) {
+        bool dir = random_direction();
+        if (dir) {
+            ball->x -= 4.0f; // Esquerda
+        } else {
+            ball->x += 4.0f; // Direita
+        }
+        ball->collisions++;
+    }
+
+    if (ball->x < 0) ball->x = 0;
+    if (ball->x >= SSD1306_WIDTH) ball->x = SSD1306_WIDTH - 1;
+    if (ball->y >= SSD1306_HEIGHT) {
+        ball->active = false;
+    }
+}
+```
+
+**8. Função register_ball_landing()**:
+
+```c
+void register_ball_landing(Ball *ball) {
+    int bin = (int)(ball->x / (SSD1306_WIDTH / CHANNELS));
+    if (bin >= 0 && bin < CHANNELS) {
+        histogram[bin]++;
+        total_balls++;
+    }
+}
+```
+
+**9. Função get_left_probability()**:
+
+```c
+float get_left_probability() {
+    return left_prob;
+}
+```
+
+
+#### Gerenciador de Exibição display.c:
+
+**1. Includes**:
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include "pico/stdlib.h"
+#include "hardware/i2c.h"
+#include "ssd1306.h"
+#include "ssd1306_i2c.h"
+#include "display.h"
+```
+
+**1. Includes**:
+
+
+#define BUFFER_LENGTH (SSD1306_WIDTH * SSD1306_HEIGHT / 8)
+
+static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];
+
+void clear_display_buffer() {
+    memset(display_buffer, 0, BUFFER_LENGTH);
+}
+
+void ssd1306_update_display() {
+    uint8_t command_buffer[2];
+    
+    command_buffer[0] = 0x00;
+    command_buffer[1] = 0x21;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x00;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x7F;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    
+    command_buffer[1] = 0x22;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x00;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x07;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    
+    uint8_t data_buffer[1025];
+    data_buffer[0] = 0x40;
+    memcpy(&data_buffer[1], display_buffer, BUFFER_LENGTH);
+    i2c_write_blocking(i2c1, 0x3C, data_buffer, BUFFER_LENGTH + 1, false);
+}
+
+void ssd1306_setup() {
+    uint8_t init_commands[] = {
+        0x00, 0xAE, 0x00, 0xD5, 0x80, 0x00, 0xA8, 0x3F, 0x00, 0xD3, 0x00,
+        0x00, 0x40, 0x00, 0x8D, 0x14, 0x00, 0x20, 0x00, 0x00, 0xA1, 0x00,
+        0xC8, 0x00, 0xDA, 0x12, 0x00, 0x81, 0xCF, 0x00, 0xD9, 0xF1, 0x00,
+        0xDB, 0x40, 0x00, 0xA4, 0x00, 0xA6, 0x00, 0xAF
+    };
+    i2c_write_blocking(i2c1, 0x3C, init_commands, sizeof(init_commands), false);
+}
+
+void init_display() {
+    i2c_init(i2c1, 400 * 1000);
+    gpio_set_function(14, GPIO_FUNC_I2C);
+    gpio_set_function(15, GPIO_FUNC_I2C);
+    gpio_pull_up(14);
+    gpio_pull_up(15);
+    ssd1306_setup();
+    clear_display_buffer();
+    ssd1306_update_display();
+    clear_display_buffer();
+    ssd1306_update_display();
+}
+
+void draw_histogram(int *histogram) {
+    for (int i = 0; i < CHANNELS; i++) {
+        if (histogram[i] > 0) {
+            int height = histogram[i] / 2; // Cada 2 bolas adicionam 1 pixel de altura
+            if (height > SSD1306_HEIGHT - 10) height = SSD1306_HEIGHT - 10;
+            for (int y = SSD1306_HEIGHT - height; y < SSD1306_HEIGHT; y++) {
+                for (int x = i * CHANNEL_WIDTH; x < (i + 1) * CHANNEL_WIDTH - 1; x++) {
+                    ssd1306_set_pixel(display_buffer, x, y, true);
+                }
+            }
+        }
+    }
+}
+
+void draw_ball(Ball *ball) {
+    if (ball->active) {
+        ssd1306_set_pixel(display_buffer, (int)ball->x, (int)ball->y, true);
+    }
+}
+
+void draw_probabilities(float left_prob) {
+    char left_buffer[8];
+    char right_buffer[8];
+    snprintf(left_buffer, sizeof(left_buffer), "%.0f%%", left_prob);
+    snprintf(right_buffer, sizeof(right_buffer), "%.0f%%", 100.0f - left_prob);
+    ssd1306_draw_string(display_buffer, 0, 28, left_buffer); // Esquerda, y=28
+    ssd1306_draw_string(display_buffer, 104, 28, right_buffer); // Direita, ajustado para caber
+}
+
+void update_display(Ball *balls, int ball_count, int *histogram) {
+    clear_display_buffer();
+    for (int i = 0; i < ball_count; i++) {
+        draw_ball(&balls[i]);
+    }
+    draw_histogram(histogram);
+    char buffer[16];
+    snprintf(buffer, sizeof(buffer), "Bolas: %d", total_balls);
+    ssd1306_draw_string(display_buffer, 0, 0, buffer);
+    draw_probabilities(get_left_probability());
+    ssd1306_update_display();
+}
+
+void draw_counter(int total_balls) {
+}
