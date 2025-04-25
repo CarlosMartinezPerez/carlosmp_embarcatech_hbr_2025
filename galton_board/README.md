@@ -557,17 +557,25 @@ float get_left_probability() {
 #include "display.h"
 ```
 
-**1. Includes**:
+**2. Definições**:
 
-
+```c
 #define BUFFER_LENGTH (SSD1306_WIDTH * SSD1306_HEIGHT / 8)
 
 static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];
+```
 
+**3. Função clear_display_buffer()**:
+
+```c
 void clear_display_buffer() {
     memset(display_buffer, 0, BUFFER_LENGTH);
 }
+```
 
+**4. Função ssd1306_update_display()**:
+
+```c
 void ssd1306_update_display() {
     uint8_t command_buffer[2];
     
@@ -591,7 +599,14 @@ void ssd1306_update_display() {
     memcpy(&data_buffer[1], display_buffer, BUFFER_LENGTH);
     i2c_write_blocking(i2c1, 0x3C, data_buffer, BUFFER_LENGTH + 1, false);
 }
+```
 
+
+
+
+**5. Função ssd1306_setup()**:
+
+```c
 void ssd1306_setup() {
     uint8_t init_commands[] = {
         0x00, 0xAE, 0x00, 0xD5, 0x80, 0x00, 0xA8, 0x3F, 0x00, 0xD3, 0x00,
@@ -601,7 +616,12 @@ void ssd1306_setup() {
     };
     i2c_write_blocking(i2c1, 0x3C, init_commands, sizeof(init_commands), false);
 }
+```
 
+
+**6. Função init_display()**:
+
+```c
 void init_display() {
     i2c_init(i2c1, 400 * 1000);
     gpio_set_function(14, GPIO_FUNC_I2C);
@@ -614,7 +634,12 @@ void init_display() {
     clear_display_buffer();
     ssd1306_update_display();
 }
+```
 
+
+**7. Função draw_histogram()**:
+
+```c
 void draw_histogram(int *histogram) {
     for (int i = 0; i < CHANNELS; i++) {
         if (histogram[i] > 0) {
@@ -628,13 +653,23 @@ void draw_histogram(int *histogram) {
         }
     }
 }
+```
 
+
+
+**8. Função draw_ball()**:
+```c
 void draw_ball(Ball *ball) {
     if (ball->active) {
         ssd1306_set_pixel(display_buffer, (int)ball->x, (int)ball->y, true);
     }
 }
+```
 
+
+
+**9. Função draw_probabilities()**:
+```c
 void draw_probabilities(float left_prob) {
     char left_buffer[8];
     char right_buffer[8];
@@ -643,7 +678,12 @@ void draw_probabilities(float left_prob) {
     ssd1306_draw_string(display_buffer, 0, 28, left_buffer); // Esquerda, y=28
     ssd1306_draw_string(display_buffer, 104, 28, right_buffer); // Direita, ajustado para caber
 }
+```
 
+
+**10. Função update_display()**:
+
+```c
 void update_display(Ball *balls, int ball_count, int *histogram) {
     clear_display_buffer();
     for (int i = 0; i < ball_count; i++) {
@@ -656,6 +696,13 @@ void update_display(Ball *balls, int ball_count, int *histogram) {
     draw_probabilities(get_left_probability());
     ssd1306_update_display();
 }
+```
 
+
+**11. Função draw_counter()**:
+
+
+```c
 void draw_counter(int total_balls) {
 }
+```
