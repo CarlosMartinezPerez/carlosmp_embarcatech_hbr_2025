@@ -14,7 +14,7 @@ Este projeto complementa sua contraparte monolítica, [LedBlinkMonolithic](https
 
 ## Arquitetura Modular
 O projeto adota uma arquitetura modular, organizando o código em três camadas principais:
-1. **Drivers**: Código de baixo nível que interage diretamente com o hardware (por exemplo, o chip Wi-Fi CYW4343 que controla o LED embutido).
+1. **Drivers**: Código de baixo nível que interage diretamente com o hardware (por exemplo, o chip Wi-Fi CYW43439 que controla o LED embutido).
 2. **HAL (Camada de Abstração de Hardware)**: Uma camada de abstração que fornece funções simples e reutilizáveis para interagir com o hardware, escondendo detalhes de baixo nível.
 3. **Aplicação**: Lógica de alto nível que orquestra o comportamento do programa (por exemplo, piscar o LED).
 
@@ -50,7 +50,7 @@ Abaixo está uma explicação detalhada de cada arquivo de código-fonte e sua f
 #### `drivers/led_embutido.c`
 - **Propósito**: Implementa o controle de baixo nível do LED embutido.
 - **Funcionalidade**:
-  - Inicializa o chip Wi-Fi CYW4343 (necessário para controlar o LED) usando `cyw43_arch_init`.
+  - Inicializa o chip Wi-Fi CYW43439 (necessário para controlar o LED) usando `cyw43_arch_init`.
   - Fornece uma função para definir o estado do LED (ligado ou desligado) usando `cyw43_arch_gpio_put`.
 - **Aspectos Principais**:
   - Interage diretamente com a API `cyw43_arch` do Pico SDK.
@@ -119,7 +119,7 @@ This project complements its monolithic counterpart, [LedBlinkMonolithic](https:
 
 ## Modular Architecture
 The project adopts a modular architecture, organizing code into three main layers:
-1. **Drivers**: Low-level code that directly interfaces with hardware (e.g., the CYW4343 Wi-Fi chip controlling the onboard LED).
+1. **Drivers**: Low-level code that directly interfaces with hardware (e.g., the CYW43439 Wi-Fi chip controlling the onboard LED).
 2. **HAL (Hardware Abstraction Layer)**: An abstraction layer providing simple, reusable functions to interact with hardware, hiding low-level details.
 3. **Application**: High-level logic that orchestrates the program's behavior (e.g., blinking the LED).
 
@@ -155,7 +155,7 @@ Below is a detailed explanation of each source file and its role in the modular 
 #### `drivers/led_embutido.c`
 - **Purpose**: Implements low-level control of the onboard LED.
 - **Functionality**:
-  - Initializes the CYW4343 Wi-Fi chip (required for LED control) using `cyw43_arch_init`.
+  - Initializes the CYW43439 Wi-Fi chip (required for LED control) using `cyw43_arch_init`.
   - Provides a function to set the LED state (on or off) using `cyw43_arch_gpio_put`.
 - **Key Aspects**:
   - Directly interfaces with the Pico SDK's `cyw43_arch` API.
