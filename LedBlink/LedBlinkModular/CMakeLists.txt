@@ -34,8 +34,10 @@ project(LedBlinkModular C CXX ASM)
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
+add_executable(LedBlinkModular app/main.c drivers/led_embutido.c hal/hal_led.c)
 
-add_executable(LedBlinkModular main.c )
+# Add headers directories
+target_include_directories(LedBlinkModular PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
 
 pico_set_program_name(LedBlinkModular "LedBlinkModular")
 pico_set_program_version(LedBlinkModular "0.1")
@@ -46,17 +48,13 @@ pico_enable_stdio_usb(LedBlinkModular 0)
 
 # Add the standard library to the build
 target_link_libraries(LedBlinkModular
-        pico_stdlib)
+        pico_stdlib
+        pico_cyw43_arch_lwip_poll)
 
 # Add the standard include files to the build
 target_include_directories(LedBlinkModular PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
-
-# Add any user requested libraries
-target_link_libraries(LedBlinkModular 
-        
-        )
 
 pico_add_extra_outputs(LedBlinkModular)
 
