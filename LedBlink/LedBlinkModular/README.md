@@ -22,20 +22,20 @@ Essa estrutura melhora a manutenibilidade ao isolar o código específico do har
 
 ## Estrutura do Projeto
 O projeto está organizado da seguinte forma:  
-
-LedBlinkModular/
-├── app/
-│   └── main.c
-├── drivers/
-│   └── led_embutido.c
-├── hal/
-│   └── hal_led.c
-├── include/
-│   ├── led_embutido.h
-│   └── hal_led.h
-├── CMakeLists.txt
-├── README.md
-
+  
+LedBlinkModular/  
+├── app/  
+│   └── main.c  
+├── drivers/  
+│   └── led_embutido.c  
+├── hal/  
+│   └── hal_led.c  
+├── include/  
+│   ├── led_embutido.h  
+│   └── hal_led.h  
+├── CMakeLists.txt  
+├── README.md  
+  
 ### Descrição dos Arquivos
 Abaixo está uma explicação detalhada de cada arquivo de código-fonte e sua função na arquitetura modular:
 
@@ -126,21 +126,21 @@ The project adopts a modular architecture, organizing code into three main layer
 This structure enhances maintainability by isolating hardware-specific code, allowing changes to hardware without affecting the application logic.
 
 ## Project Structure
-The project is organized as follows:
-
-LedBlinkModular/
-├── app/
-│   └── main.c
-├── drivers/
-│   └── led_embutido.c
-├── hal/
-│   └── hal_led.c
-├── include/
-│   ├── led_embutido.h
-│   └── hal_led.h
-├── CMakeLists.txt
-├── README.md
-
+The project is organized as follows:  
+  
+LedBlinkModular/  
+├── app/  
+│   └── main.c  
+├── drivers/  
+│   └── led_embutido.c  
+├── hal/  
+│   └── hal_led.c  
+├── include/  
+│   ├── led_embutido.h  
+│   └── hal_led.h  
+├── CMakeLists.txt  
+├── README.md  
+  
 ### File Descriptions
 Below is a detailed explanation of each source file and its role in the modular architecture:
 
