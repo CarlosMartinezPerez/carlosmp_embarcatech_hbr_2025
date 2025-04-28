@@ -10,7 +10,7 @@ O objetivo principal é destacar os benefícios de uma arquitetura modular em si
 - **Manutenibilidade**: Simplificação de atualizações e depuração ao isolar mudanças em módulos específicos.
 - **Escalabilidade**: Facilitação da adição de novas funcionalidades ou hardware sem alterar a lógica principal.
 
-Este projeto complementa sua contraparte monolítica, [LedBlinkMonolithic](https://github.com/your-username/LedBlinkMonolithic), para ilustrar as diferenças entre as duas abordagens.
+Este projeto complementa sua contraparte monolítica, [LedBlinkMonolithic](https://github.com/CarlosMartinezPerez/carlosmp_embarcatech_hbr_2025/tree/main/LedBlink/LedBlinkMonolithic), para ilustrar as diferenças entre as duas abordagens.
 
 ## Arquitetura Modular
 O projeto adota uma arquitetura modular, organizando o código em três camadas principais:
@@ -115,7 +115,7 @@ The primary goal is to showcase the benefits of a modular architecture in embedd
 - **Maintainability**: Simplifying updates and debugging by isolating changes to specific modules.
 - **Scalability**: Facilitating the addition of new features or hardware without altering the core logic.
 
-This project complements its monolithic counterpart, [LedBlinkMonolithic](https://github.com/your-username/LedBlinkMonolithic), to illustrate the differences between the two approaches.
+This project complements its monolithic counterpart, [LedBlinkMonolithic](https://github.com/CarlosMartinezPerez/carlosmp_embarcatech_hbr_2025/tree/main/LedBlink/LedBlinkMonolithic), to illustrate the differences between the two approaches.
 
 ## Modular Architecture
 The project adopts a modular architecture, organizing code into three main layers:
