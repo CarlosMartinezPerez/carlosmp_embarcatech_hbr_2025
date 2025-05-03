@@ -1,12 +1,18 @@
 # GALTON BOARD
 
-Este projeto implementa uma simulação digital de um **Tabuleiro de Galton** (Galton Board) utilizando um microcontrolador Raspberry Pi Pico e um display OLED SSD1306 (128x64 pixels), todos presentes na placa BitDogLab. A simulação modela a queda de bolinhas através de fileiras de pinos, resultando em uma distribuição binomial, que é visualizada em um histograma no display e analisada via saída serial. A distribuição das bolinhas no histograma, para um número suficientemente grande de ensaios, se aproxima cada vez mais, da forma de uma curva gaussiana (ou normal, denotada por N(0,1)), conforme estabelece o Teorema do Limite Central.
+Este projeto implementa uma simulação digital de um **Tabuleiro de Galton** (Galton Board) utilizando um microcontrolador Raspberry Pi Pico e um display OLED SSD1306 (128x64 pixels), todos presentes na placa BitDogLab. A simulação modela a queda de bolinhas através de fileiras de pinos, resultando em uma distribuição binomial, que é visualizada em um histograma no display e analisada via saída serial. A distribuição das bolinhas no histograma, para um número suficientemente grande de ensaios, se aproxima cada vez mais, da forma de uma curva gaussiana (ou normal, denotada por N(0,1) se na sua forma padrão, conforme estabelece o Teorema Central do Limite).
 
 ## 1. O que é um Tabuleiro de Galton?
 
-O Tabuleiro de Galton, também conhecido como Quincunx, é um dispositivo inventado por Sir Francis Galton no século XIX para demonstrar o teorema central do limite e a distribuição binomial. Consiste em uma placa vertical com fileiras de pinos dispostos em padrão triangular. Bolinhas são liberadas do topo e, ao colidirem com os pinos, desviam aleatoriamente para a esquerda ou direita com igual probabilidade (50%). Ao final, as bolinhas se acumulam em compartimentos (bins) na base, formando uma curva em forma de sino que se aproxima da forma da distribuição normal para um grande número de ensaios.
+O Tabuleiro de Galton, também conhecido como Quincunx, é um dispositivo inventado por Sir Francis Galton no século XIX para demonstrar o teorema central do limite e a distribuição binomial. Consiste em uma placa vertical com fileiras de pinos dispostos em padrão triangular. Bolinhas são liberadas do topo desde o centro do tabuleiro e, ao colidirem com os pinos, desviam aleatoriamente para a esquerda ou direita com igual probabilidade (50%). Ao final, as bolinhas se acumulam em compartimentos (bins) na base, formando uma curva em forma de sino que se aproxima da forma da distribuição normal para um grande número de bolinhas liberadas (ensaios).
 
-A beleza do Tabuleiro de Galton está em sua capacidade de ilustrar conceitos estatísticos fundamentais de forma visual e intuitiva, sendo amplamente utilizado em estudos de probabilidade, estatística e física. Um exemplo bastante ilustrativo dessa demonstração pode ser visto [neste vídeo](https://www.youtube.com/watch?v=L4RMRq1FUcg), em que um Tabuleiro de Galton é posto em ação, destacando a formação da curva em sino com milhares de bolinhas. O conceito envolvido é o fato de que pode-se obter um resultado previsível mesmo tratando com eventos completamente aleatórios.
+A beleza do Tabuleiro de Galton está em sua capacidade de ilustrar conceitos estatísticos fundamentais de forma visual e intuitiva, sendo amplamente utilizado em estudos de Probabilidade, Estatística e Física. Um exemplo bastante ilustrativo dessa demonstração pode ser visto [neste vídeo](https://www.youtube.com/watch?v=L4RMRq1FUcg), em que um Tabuleiro de Galton é posto em ação, destacando a formação da curva em forma de sino com milhares de bolinhas. O conceito subjacente é que muitas vezes se pode obter um resultado previsível mesmo tratando com eventos completamente aleatórios.
+
+A distribuição binomial, por sua vez, é uma distribuição de probabilidade que descreve a probabilidade de um certo número de sucessos ("S") em um número fixo de tentativas ("n") independentes, onde cada tentativa tem apenas dois resultados possíveis (sucesso ou fracasso) com a mesma probabilidade ("p" e "1-p") em cada tentativa. Newton e Pascal tiveram papel relevente no desenvolvimento da teoria dos coeficientes binomiais, que são fundamentais para a distribuição binomial.
+
+Para descrever a distribuição binomila, imagine um jogo com dois resultados possíveis: ganhar (sucesso) ou perder (fracasso). Se jogarmos o jogo n vezes, a distribuição binomial pode nos dizer qual a probabilidade de ganhar x vezes (onde x é o número de sucessos). A probabilidade de obtermos exatamente x sucessos em n tentativas é dada por: P(x) = (nCx) * p^x * (1-p)^(n-x), onde nCx é o coeficiente binomial (combinação de n elementos toimado x a x), que representa o número de maneiras de obter x sucessos entre n tentativas.
+
+Blaise Pascal criou o triângulo de Pascal, uma representação visual dos coeficientes binomiais. Cada número no triângulo é a soma dos dois números acima dele, e os coeficientes binomiais podem ser lidos diretamente das linhas do triângulo. Isaac Newton expandiu o trabalho de Pascal e desenvolveu o teorema do binômio de Newton, que fornece uma fórmula para expandir uma potência de um binômio (x + y)^n. Essa fórmula usa os coeficientes binomiais, que são os mesmos do triângulo de Pascal. Os coeficientes binomiais são fundamentais para calcular probabilidades em situações de distribuição binomial, como em testes de hipóteses ou análises de dados. Newton e Pascal contribuíram significativamente para o desenvolvimento e compreensão destes coeficientes.
 
 ## 2. A Simulação Digital (Digital Twin)
 
@@ -14,24 +20,24 @@ A simulação digital desenvolvida neste projeto recria o comportamento de um Ta
 
 ### Estrutura da Simulação
 - **Display e Bins**: Os 128 pixels horizontais do display são divididos em 16 bins, cada um com 8 pixels de largura (128 ÷ 16 = 8). Esses bins, localizados na base do display, acumulam as bolinhas após sua queda.
-- **Pinos e Fileiras**: Acima dos bins, há 15 fileiras de pinos dispostos em um padrão triangular (15 pinos na primeira fileira, 14 na segunda, e assim por diante). Como o display tem 64 pixels de altura, as fileiras de pinos seriam teoricamente espaçadas por ~4,27 pixels (64 ÷ 15), mas isso é insuficiente para uma bolinha de ~6 pixels de diâmetro passar sem ficar presa. Assim, as fileiras superiores são consideradas fora da tela, e a simulação foca na trajetória das bolinhas.
-- **Geometria dos Pinos**: Os pinos formam triângulos equiláteros com lados de 8 pixels. A distância vertical entre fileiras é calculada como a altura de um triângulo equilátero de lado 8, ou 4 vezes a raiz quadrada de 3, aproximadamente 6,93 (7 pixels), mas a simulação abstrai isso para manter a lógica simples.
+- **Pinos e Fileiras**: Acima dos 16 bins, há 15 fileiras de pinos dispostos em um padrão triangular (15 pinos na primeira fileira logo acima dos bins, 14 na fileira acima desta, e assim por diante).
+- **Geometria dos Pinos**: Os pinos formam triângulos equiláteros com lados de 8 pixels. A distância vertical entre fileiras é calculada como a altura de um triângulo equilátero de lado 8, ou 4 vezes a raiz quadrada de 3, aproximadamente 6,93 (7 pixels), mas a simulação abstrai isso para manter a lógica simples, mesmo porque não caberiam 15 fileiras de 7 pixels na altura do sisplay.
 - **Comportamento das Bolinhas**: Cada bolinha começa no centro (x = 64) e sofre 15 colisões, desviando aleatoriamente ±4 pixels (para a esquerda ou para a direita) por colisão, com 50% de chance para cada direção. Após 15 colisões, a bolinha cai em um dos 16 bins.
 - **Casos Extremos**:
   - Máximo à direita: \( 64 + 15 x 4 = 124 \) (bin 16).
   - Máximo à esquerda: \( 64 - 15 x 4 = 4 \) (bin 1).
-- **Visualização**: As bolinhas são exibidas como pontos no display durante a queda, e o histograma na base é desenhado com quadrados, onde cada 2 bolas incrementam 1 pixel de altura (escala ajustada para evitar preenchimento muito rápido da tela).
-- **Saída Serial**: A cada 100 bolas, o programa exibe:
+- **Visualização**: As bolinhas são exibidas como pontos no display durante a queda, e o histograma na base é desenhado com quadrados, em que cada 2 bolinhas incrementam 1 pixel de altura (escala ajustada para evitar preenchimento muito rápido da tela).
+- **Saída Serial**: A cada 100 bolas, o programa exibe no Monitor Serial:
   - Total de bolas.
   - Quantidade de bolas em cada bin.
   - Média da distribuição.
   - Desvio padrão da distribuição.
-- Controle de Probabilidades: Dois botões, conectados aos pinos GPIO 5 (botão A) e GPIO 6 (botão B), permitem ajustar dinamicamente as probabilidades de desvio das bolinhas. Inicialmente, a probabilidade é 50% para esquerda e 50% para direita. Cada pressão do botão A aumenta a probabilidade de desvio à esquerda em 10% (e reduz a direita em 10%), até um máximo de 90% esquerda / 10% direita. O botão B faz o oposto, aumentando a probabilidade de desvio à direita até 10% esquerda / 90% direita. As porcentagens atuais são exibidas nas laterais do display, permitindo visualizar o impacto dessas alterações na distribuição binomial, que se torna assimétrica conforme as probabilidades mudam.
+- Controle de Probabilidades: Dois botões, conectados aos pinos GPIO 5 (botão A) e GPIO 6 (botão B), permitem ajustar dinamicamente as probabilidades de desvio das bolinhas. Inicialmente, a probabilidade é 50% para esquerda e 50% para direita. Cada pressão do botão A aumenta a probabilidade de desvio à esquerda em 10% (e reduz a da direita em 10%), até um máximo de 90% esquerda / 10% direita. O botão B faz o oposto, aumentando a probabilidade de desvio à direita até 10% esquerda / 90% direita. As porcentagens escolhidas com os botões são exibidas nas laterais do display, permitindo visualizar o impacto dessas alterações na distribuição binomial, que se torna assimétrica conforme as probabilidades mudam.
 
 ### Características
 - A simulação utiliza o gerador de números aleatórios do Pico (`get_rand_32`) para garantir desvios aleatórios.
 - Até 10 bolinhas podem estar ativas simultaneamente, caindo em uma "chuva" contínua.
-- A probabilidade teórica de uma bolinha cair nos bins extremos (1 ou 16) é 1 sobre 2 elevado a 15 vezes 100% ou 0,003%. Só existe uma maneira de uma bolinha atingir o bin 16, ela tem que desviar à direita nas 15 colisões. Já para chegar aos bins 8 ou 9 (centrais), a bolinha tem 6435 caminhos diferentes para fazer. O cálculo dessa probabilidade é dado pela combinação de 15, 7 a 7, vezes 1 sobre 2 elevado a 15 vezes 100% ou 6435 vezes 0,003%, ou aproximadamente 19.64\%. A diferença nessas probabilidades reflete bem a natureza binomial da simulação.
+- Repare que a probabilidade teórica de uma bolinha cair nos bins extremos (1 ou 16) é meio elevado a 15 vezes 100% ou 0,003%, aproximadamente. Só existe uma maneira de uma bolinha atingir o bin 16, ela tem que desviar à direita nas 15 colisões. Já para chegar aos bins 8 ou 9 (centrais), a bolinha tem 6435 (15C7 ou 15C8) caminhos diferentes para fazer. O cálculo dessa probabilidade é dado pela combinação de 15, tomado 8 a 8 (ou 7 a 7, dá ba nesna), vezes meio elevado a 15 vezes 100% ou 6435 vezes 0,003%, aproximadamente 19.64\%. A diferença nessas probabilidades (da bolinha cair nos bins 8 ou 9 ou de cair nos bins 1 ou 16) reflete bem a natureza binomial da simulação.
 
 ## 3. Análise do Código
 
@@ -135,7 +141,7 @@ Este trecho define constantes necessárias para a interação com o hardware. As
 int main() { // Função para teste de aleatoriedade durante o desenvolvimento
     stdio_init_all();
     sleep_ms(2000);  // Tempo para abrir o monitor serial
-    test_randomness(100000); // Altere a quantidade de  testes
+    test_randomness(100000); // Altere a quantidade de ensaios
 }*/
 ```
 
@@ -266,7 +272,6 @@ static bool last_state_b = true;
 Esses comandos monitoram os botões para ajustar as probabilidades e controlam a sincronização do loop, que atualiza a simulação a cada 50ms.  
 
 ```c
-        // Detecta borda de descida para botão A (1 -> 0)
         if (!state_a && last_state_a && (now - last_press_a) > DEBOUNCE_MS) {
             if (left_prob < 90.0f) {
                 left_prob += 10.0f;
@@ -274,7 +279,6 @@ Esses comandos monitoram os botões para ajustar as probabilidades e controlam a
             last_press_a = now;
         }
 
-        // Detecta borda de descida para botão B (1 -> 0)
         if (!state_b && last_state_b && (now - last_press_b) > DEBOUNCE_MS) {
             if (left_prob > 10.0f) {
                 left_prob -= 10.0f;
@@ -422,49 +426,40 @@ Este trecho finaliza o loop principal, garantindo a integridade do histograma, a
 #include "pico/rand.h"
 #include "galton.h"
 ```
-Este trecho define as bibliotecas necessárias para a implementação da lógica da simulação.
+Este trecho define as bibliotecas necessárias para a implementação da lógica da simulação, como aleatoriedade, cálculos estatísticos e interação com hardware.  
 
-* `#include <stdio.h>`: Inclui a biblioteca padrão de entrada/saída, permitindo o uso de funções como `printf` para exibir estatísticas na saída serial (ex.: em `calculate_statistics`).
-* `#include <stdlib.h>`: Inclui a biblioteca padrão, fornecendo funções como `get_rand_32` (usada indiretamente via `pico/rand.h`) para geração de números aleatórios.
-* `#include <math.h>`: Inclui a biblioteca matemática, fornecendo funções como `sqrtf` para cálculos de desvio padrão em `calculate_statistics`.
-* `#include "pico/stdlib.h"`: Inclui a biblioteca padrão do Pico SDK, fornecendo funções como `sleep_ms` e acesso a GPIO, usadas em outras partes do projeto.
-* `#include "pico/rand.h"`: Inclui a biblioteca de geração de números aleatórios do Pico SDK, fornecendo `get_rand_32` para a função `random_direction`, essencial para simular desvios aleatórios.
-* `#include "galton.h"`: Inclui o arquivo de cabeçalho `galton.h`, que define constantes (ex.: `MAX_BALLS`, `CHANNELS`), a estrutura `Ball`, e protótipos de funções usadas em `galton.c` (ex.: `init_ball`, `update_ball`).
+* `#include <stdio.h>`: Inclui a biblioteca padrão de entrada/saída, permitindo o uso de funções como `printf` para exibir estatísticas na saída serial (ex.: em `calculate_statistics`).  
+* `#include <stdlib.h>`: Inclui a biblioteca padrão, fornecendo funções como `get_rand_32` (usada indiretamente via `pico/rand.h`) para geração de números aleatórios.  
+* `#include <math.h>`: Inclui a biblioteca matemática, fornecendo funções como `sqrtf` para cálculos de desvio padrão em `calculate_statistics`.  
+* `#include "pico/stdlib.h"`: Inclui a biblioteca padrão do Pico SDK, fornecendo funções como `sleep_ms` e acesso a GPIO, usadas em outras partes do projeto.  
+* `#include "pico/rand.h"`: Inclui a biblioteca de geração de números aleatórios do Pico SDK, fornecendo `get_rand_32` para a função `random_direction`, essencial para simular desvios aleatórios.  
+* `#include "galton.h"`: Inclui o arquivo de cabeçalho `galton.h`, que define constantes (ex.: `MAX_BALLS`, `CHANNELS`), a estrutura `Ball`, e protótipos de funções usadas em `galton.c` (ex.: `init_ball`, `update_ball`).  
 
-### Resumo
-Este trecho importa bibliotecas padrão e específicas do Pico SDK, além do cabeçalho `galton.h`, fornecendo as funções e definições necessárias para implementar a lógica da simulação do Tabuleiro de Galton, incluindo aleatoriedade, cálculos estatísticos e interação com hardware.  
 **2. Definições**:
 
 ```c
 int histogram[CHANNELS] = {0};
 int total_balls = 0;
-float left_prob = 50.0f; // Probabilidade inicial: 50% esquerda
+float left_prob = 50.0f;
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define e inicializa variáveis globais cruciais para a simulação. Explicação sucinta, comando por comando:
+Este trecho define e inicializa variáveis globais para a simulação.
 
 * `int histogram[CHANNELS] = {0};`: Declara e inicializa um array global `histogram` com tamanho `CHANNELS` (16, definido em `galton.h`), preenchendo todos os elementos com 0. Ele armazena a contagem de bolas que caem em cada bin do Tabuleiro de Galton.
 * `int total_balls = 0;`: Declara e inicializa a variável global `total_balls` como 0. Ela rastreia o número total de bolas que atingiram os bins, usada para estatísticas e exibição no display.
-* `float left_prob = 50.0f; // Probabilidade inicial: 50% esquerda`: Declara e inicializa a variável global `left_prob` como 50.0f (50%), definindo a probabilidade inicial de uma bolinha desviar à esquerda em cada colisão. É ajustada dinamicamente pelos botões A e B em `main.c`.
-
-### Resumo
-Este trecho configura o histograma (para contagem de bolas por bin), o contador total de bolas e a probabilidade inicial de desvio à esquerda (50%), fornecendo o estado inicial essencial para a simulação do Tabuleiro de Galton.
+* `float left_prob = 50.0f; Declara e inicializa a variável global `left_prob` como 50.0f (50%), definindo a probabilidade inicial de uma bolinha desviar à esquerda em cada colisão. É ajustada dinamicamente pelos botões A e B em `main.c`.  
 
 **3. Função random_direction()**:
 
 ```c
 bool random_direction() {
-    return (get_rand_32() % 100) < left_prob; // Ex.: 60% esquerda -> true se rand < 60
+    return (get_rand_32() % 100) < left_prob;
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `random_direction` que determina aleatoriamente a direção de desvio de uma bolinha. Explicação sucinta, comando por comando:
+Este trecho define a função `random_direction` que determina aleatoriamente a direção de desvio de uma bolinha.
 
-* `bool random_direction() {`: Declara a função `random_direction`, que retorna um valor booleano (`true` para desvio à esquerda, `false` para direita).
-* `return (get_rand_32() % 100) < left_prob;`: Gera um número aleatório de 0 a 99 usando `get_rand_32() % 100` (onde `get_rand_32` é do `pico/rand.h`) e compara com `left_prob` (ex.: 50.0f para 50%, 60.0f para 60%). Retorna `true` se o número for menor que `left_prob`, indicando desvio à esquerda (ex.: para 60%, `true` se rand < 60). Caso contrário, retorna `false` (desvio à direita).
-* `// Ex.: 60% esquerda -> true se rand < 60`: Comentário explicando que, com `left_prob = 60.0f`, há 60% de chance de retornar `true` (desvio à esquerda).
-* `}`: Fecha a função.
-
-### Resumo
-A função `random_direction` usa um número aleatório para decidir se uma bolinha desvia à esquerda (`true`) ou à direita (`false`), com base na probabilidade `left_prob`, implementando a aleatoriedade essencial para a simulação binomial do Tabuleiro de Galton.  
+* `bool random_direction() {`: Declara a função `random_direction`, que retorna um valor booleano (`true` para desvio à esquerda, `false` para direita).  
+* `return (get_rand_32() % 100) < left_prob;`: Gera um número aleatório de 0 a 99 usando `get_rand_32() % 100` (onde `get_rand_32` é do `pico/rand.h`) e compara com `left_prob` (ex.: 50.0f para 50%, 60.0f para 60%). Retorna `true` se o número for menor que `left_prob`, indicando desvio à esquerda (ex.: para 60%, `true` se `get_rand_32() % 100` < 60). Caso contrário, retorna `false` (desvio à direita).
+* `}`: Fecha a função.  
 
 **4. Função test_randomness()**:
 
@@ -472,27 +467,24 @@ A função `random_direction` usa um número aleatório para decidir se uma boli
 void test_randomness(int trials) {
     int left = 0, right = 0;
     for (int i = 0; i < trials; i++) {
-        if (random_direction() == 0) left++;
-        else right++;
+        if (random_direction() == 0) right++;
+        else left++;
     }
     printf("Esquerda: %d (%.2f%%), Direita: %d (%.2f%%)\n",
             left, (float)left / trials * 100,
             right, (float)right / trials * 100);
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `test_randomness` para testar a distribuição de desvios aleatórios. Explicação sucinta, comando por comando:
+Este trecho define a função `test_randomness` para testar a distribuição de desvios aleatórios.
 
-* `void test_randomness(int trials) {`: Declara a função `test_randomness`, que recebe um parâmetro `trials` (número de testes) e não retorna valor.
-* `int left = 0, right = 0;`: Declara e inicializa duas variáveis locais, `left` e `right`, para contar os desvios à esquerda e à direita, respectivamente.
-* `for (int i = 0; i < trials; i++) {`: Inicia um laço que executa `trials` iterações para testar a função `random_direction`.
-* `if (random_direction() == 0) left++;`: Chama `random_direction`; se retornar `false` (0, desvio à direita), incrementa `left` (neste caso, "esquerda" parece um erro no código, deveria ser `right`).
-* `else right++;`: Se `random_direction` retornar `true` (desvio à esquerda), incrementa `right` (também parece invertido, deveria ser `left`).
+* `void test_randomness(int trials) {`: Declara a função `test_randomness`, que recebe um parâmetro `trials` (número de simulações) e não retorna valor, apenas imprime os resultados no monitor serial.    
+* `int left = 0, right = 0;`: Declara e inicializa duas variáveis locais, `left` e `right`, para contar os desvios à esquerda e à direita, respectivamente.  
+* `for (int i = 0; i < trials; i++) {`: Inicia um laço que executa `trials` iterações para testar a função `random_direction`.  
+* `if (random_direction() == 0) right++;`: Chama `random_direction`; se retornar `false` (0, desvio à direita), incrementa `right`.  
+* `else left++;`: Se `random_direction` retornar `true` (desvio à esquerda), incrementa `left`.  
 * `}`: Fecha o laço `for`.
-* `printf("Esquerda: %d (%.2f%%), Direita: %d (%.2f%%)\n", ...);`: Exibe via serial o número de desvios à esquerda (`left`) e à direita (`right`), com suas porcentagens calculadas como `(float)left / trials * 100` e `(float)right / trials * 100`, formatadas com duas casas decimais.
-* `}`: Fecha a função.
-
-### Resumo
-A função `test_randomness` executa `trials` chamadas a `random_direction`, contando desvios à esquerda e à direita, e exibe suas contagens e porcentagens via serial, usada para validar a aleatoriedade da simulação. **Nota**: Há uma aparente inversão na lógica (`left` e `right` parecem trocados), que pode ser um erro no código.
+* `printf("Esquerda: %d (%.2f%%), Direita: %d (%.2f%%)\n", ...);`: Exibe via serial o número de desvios à esquerda (`left`) e à direita (`right`), com suas porcentagens calculadas como `(float)left / trials * 100` e `(float)right / trials * 100`, formatadas com duas casas decimais.  
+* `}`: Fecha a função.  
 
 **5. Função calculate_statistics()**:
 
@@ -524,7 +516,7 @@ void calculate_statistics() {
     printf("\nMédia: %.2f\nDesvio Padrão: %.2f\n", mean, std_dev);
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `calculate_statistics`, que calcula e exibe estatísticas da simulação. Explicação sucinta, comando por comando:
+Este trecho define a função `calculate_statistics`, que calcula e exibe no monitor serial, estatísticas da simulação, a cada 100 bolinhas.  
 
 * `void calculate_statistics() {`: Declara a função `calculate_statistics`, que não retorna valor, usada para processar dados do histograma.
 * `if (total_balls == 0) {`: Verifica se nenhuma bola foi registrada (`total_balls == 0`).
@@ -548,9 +540,6 @@ Este trecho, presente em `galton.c` do projeto Galton Board, define a função `
 * `}`: Fecha o laço.
 * `printf("\nMédia: %.2f\nDesvio Padrão: %.2f\n", mean, std_dev);`: Exibe a média e o desvio padrão, formatados com duas casas decimais.
 
-### Resumo
-A função `calculate_statistics` verifica se há bolas registradas, calcula a média, variância e desvio padrão da distribuição binomial com base no `histogram`, e exibe via serial o total de bolas, contagens por bin, média e desvio padrão, fornecendo uma análise estatística da simulação do Tabuleiro de Galton.
-
 **6. Função init_ball()**:
 
 ```c
@@ -561,7 +550,7 @@ void init_ball(Ball *ball) {
     ball->collisions = 0;
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `init_ball`, que inicializa uma bolinha para a simulação. Explicação sucinta, comando por comando:
+Este trecho define a função `init_ball`, que inicializa uma bolinha para a simulação.
 
 * `void init_ball(Ball *ball) {`: Declara a função `init_ball`, que recebe um ponteiro para uma estrutura `Ball` (definida em `galton.h`) e não retorna valor.
 * `ball->x = SSD1306_WIDTH / 2.0f;`: Define a coordenada horizontal `x` da bolinha como o centro do display (`SSD1306_WIDTH = 128`, então `x = 64.0f`), ponto inicial de queda.
@@ -583,9 +572,9 @@ void update_ball(Ball *ball) {
     if (ball->collisions < 15 && ball->y >= (ball->collisions + 1) * (SSD1306_HEIGHT / 15.0f)) {
         bool dir = random_direction();
         if (dir) {
-            ball->x -= 4.0f; // Esquerda
+            ball->x -= 4.0f;
         } else {
-            ball->x += 4.0f; // Direita
+            ball->x += 4.0f;
         }
         ball->collisions++;
     }
@@ -597,7 +586,7 @@ void update_ball(Ball *ball) {
     }
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `update_ball`, que atualiza o estado de uma bolinha durante a simulação. Explicação sucinta, comando por comando:
+Este trecho define a função `update_ball`, que atualiza o estado de uma bolinha durante a simulação.
 
 * `void update_ball(Ball *ball) {`: Declara a função `update_ball`, que recebe um ponteiro para uma estrutura `Ball` e não retorna valor.
 * `if (!ball->active) return;`: Verifica se a bolinha está inativa (`active = false`); se for, sai da função sem fazer alterações.
@@ -605,9 +594,9 @@ Este trecho, presente em `galton.c` do projeto Galton Board, define a função `
 * `if (ball->collisions < 15 && ball->y >= (ball->collisions + 1) * (SSD1306_HEIGHT / 15.0f)) {`: Checa se a bolinha ainda pode colidir (`collisions < 15`) e se atingiu a altura da próxima colisão (calculada como `(collisions + 1) * (64 / 15) ≈ 4.27` pixels).
 * `bool dir = random_direction();`: Chama `random_direction` para decidir aleatoriamente a direção do desvio (`true` para esquerda, `false` para direita), com base em `left_prob`.
 * `if (dir) {`: Verifica se o desvio é à esquerda (`dir = true`).
-* `ball->x -= 4.0f; // Esquerda`: Move a bolinha 4 pixels à esquerda (subtrai de `x`).
+* `ball->x -= 4.0f;`: Move a bolinha 4 pixels à esquerda (subtrai de `x`).
 * `} else {`: Caso contrário (desvio à direita, `dir = false`).
-* `ball->x += 4.0f; // Direita`: Move a bolinha 4 pixels à direita (adiciona a `x`).
+* `ball->x += 4.0f;`: Move a bolinha 4 pixels à direita (adiciona a `x`).
 * `}`: Fecha o bloco condicional de direção.
 * `ball->collisions++;`: Incrementa o contador de colisões, registrando a colisão atual.
 * `}`: Fecha o bloco condicional de colisão.
@@ -632,7 +621,7 @@ void register_ball_landing(Ball *ball) {
     }
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `register_ball_landing`, que registra a posição final de uma bolinha no histograma. Explicação sucinta, comando por comando:
+Este trecho define a função `register_ball_landing`, que registra a posição final de uma bolinha no histograma.
 
 * `void register_ball_landing(Ball *ball) {`: Declara a função `register_ball_landing`, que recebe um ponteiro para uma estrutura `Ball` e não retorna valor.
 * `int bin = (int)(ball->x / (SSD1306_WIDTH / CHANNELS));`: Calcula o índice do bin (0 a 15) onde a bolinha caiu, dividindo sua posição `x` pela largura de cada bin (`SSD1306_WIDTH / CHANNELS = 128 / 16 = 8`) e convertendo para inteiro.
@@ -652,7 +641,7 @@ float get_left_probability() {
     return left_prob;
 }
 ```
-Este trecho, presente em `galton.c` do projeto Galton Board, define a função `get_left_probability`, que retorna a probabilidade de desvio à esquerda. Explicação sucinta, comando por comando:
+Este trecho define a função `get_left_probability`, que retorna a probabilidade de desvio à esquerda.
 
 * `float get_left_probability() {`: Declara a função `get_left_probability`, que retorna um valor do tipo `float` e não recebe parâmetros.
 * `return left_prob;`: Retorna o valor da variável global `left_prob` (definida em `galton.c`), que armazena a probabilidade de uma bolinha desviar à esquerda (ex.: 50.0f para 50%, 60.0f para 60%).
@@ -675,7 +664,7 @@ A função `get_left_probability` fornece acesso à variável global `left_prob`
 #include "ssd1306_i2c.h"
 #include "display.h"
 ```
-Este trecho, presente no início de `display.c` do projeto Galton Board, importa as bibliotecas necessárias para gerenciar o display OLED SSD1306. Explicação sucinta, comando por comando:
+Este trecho importa as bibliotecas necessárias para gerenciar o display OLED SSD1306.
 
 * `#include <stdio.h>`: Inclui a biblioteca padrão de entrada/saída, permitindo o uso de funções como `snprintf` para formatar strings (ex.: "Bolas: %d").
 * `#include <string.h>`: Inclui a biblioteca para manipulação de strings, fornecendo `memset` para limpar o buffer do display.
@@ -695,7 +684,7 @@ Este trecho importa bibliotecas padrão, do Pico SDK e específicas do SSD1306, 
 
 static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define constantes e variáveis para gerenciar o buffer do display OLED SSD1306. Explicação sucinta, comando por comando:
+Este trecho define constantes e variáveis para gerenciar o buffer do display OLED SSD1306.
 
 * `#define BUFFER_LENGTH (SSD1306_WIDTH * SSD1306_HEIGHT / 8)`: Define a constante `BUFFER_LENGTH` como o tamanho do buffer do display, calculado como `SSD1306_WIDTH` (128) × `SSD1306_HEIGHT` (64) ÷ 8. Como o SSD1306 usa 1 bit por pixel e 8 bits por byte, o buffer tem 1024 bytes (128 × 64 ÷ 8).
 * `static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];`: Declara uma variável estática `display_buffer`, um array de `uint8_t` com tamanho `BUFFER_LENGTH` (1024 bytes). Ela armazena o estado dos pixels do display (1 bit por pixel), usada para desenhar bolinhas, histograma e texto antes de enviar ao SSD1306.
@@ -738,7 +727,7 @@ void ssd1306_update_display() {
     i2c_write_blocking(i2c1, 0x3C, data_buffer, BUFFER_LENGTH + 1, false);
 }
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define a função `ssd1306_update_display`, que atualiza o display OLED SSD1306 com o conteúdo do buffer. Explicação sucinta, comando por comando:
+Este trecho define a função `ssd1306_update_display`, que atualiza o display OLED SSD1306 com o conteúdo do buffer.
 
 * `void ssd1306_update_display() {`: Declara a função que atualiza o display, sem retorno.
 * `uint8_t command_buffer[2];`: Declara um array de 2 bytes para armazenar comandos I2C.
@@ -780,7 +769,7 @@ void ssd1306_setup() {
     i2c_write_blocking(i2c1, 0x3C, init_commands, sizeof(init_commands), false);
 }
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define a função `ssd1306_setup`, que inicializa o display OLED SSD1306. Explicação sucinta, comando por comando:
+Este trecho define a função `ssd1306_setup`, que inicializa o display OLED SSD1306.
 
 * `void ssd1306_setup() {`: Declara a função `ssd1306_setup`, que não retorna valor, usada para configurar o display.
 * `uint8_t init_commands[] = { ... };`: Declara um array de bytes contendo uma sequência de comandos de inicialização para o SSD1306, incluindo:
@@ -823,7 +812,7 @@ void init_display() {
     ssd1306_update_display();
 }
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define a função `init_display`, que inicializa o display OLED SSD1306 e sua comunicação I2C. Explicação sucinta, comando por comando:
+Este trecho define a função `init_display`, que inicializa o display OLED SSD1306 e sua comunicação I2C.
 
 * `void init_display() {`: Declara a função `init_display`, que não retorna valor, usada para configurar o display.
 * `i2c_init(i2c1, 400 * 1000);`: Inicializa a interface I2C (`i2c1`) com uma velocidade de 400 kHz (400 * 1000 Hz).
@@ -847,7 +836,7 @@ A função `init_display` configura a interface I2C nos pinos 14 (SDA) e 15 (SCL
 void draw_histogram(int *histogram) {
     for (int i = 0; i < CHANNELS; i++) {
         if (histogram[i] > 0) {
-            int height = histogram[i] / 2; // Cada 2 bolas adicionam 1 pixel de altura
+            int height = histogram[i] / 2;
             if (height > SSD1306_HEIGHT - 10) height = SSD1306_HEIGHT - 10;
             for (int y = SSD1306_HEIGHT - height; y < SSD1306_HEIGHT; y++) {
                 for (int x = i * CHANNEL_WIDTH; x < (i + 1) * CHANNEL_WIDTH - 1; x++) {
@@ -858,12 +847,12 @@ void draw_histogram(int *histogram) {
     }
 }
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define a função `draw_histogram`, que desenha o histograma no display OLED SSD1306. Explicação sucinta, comando por comando:
+Este trecho define a função `draw_histogram`, que desenha o histograma no display OLED SSD1306.
 
 * `void draw_histogram(int *histogram) {`: Declara a função `draw_histogram`, que recebe um ponteiro para o array `histogram` e não retorna valor.
 * `for (int i = 0; i < CHANNELS; i++) {`: Itera sobre os 16 bins (`CHANNELS = 16`) do histograma.
 * `if (histogram[i] > 0) {`: Verifica se o bin `i` tem bolas registradas (`histogram[i] > 0`).
-* `int height = histogram[i] / 2; // Cada 2 bolas adicionam 1 pixel de altura`: Calcula a altura do histograma para o bin `i`, dividindo a contagem de bolas por 2 (escala para ajustar a exibição).
+* `int height = histogram[i] / 2;`: Calcula a altura do histograma para o bin `i`, dividindo a contagem de bolas por 2 (escala para ajustar a exibição).
 * `if (height > SSD1306_HEIGHT - 10) height = SSD1306_HEIGHT - 10;`: Limita a altura máxima a 54 pixels (`SSD1306_HEIGHT = 64` - 10), reservando espaço para texto no topo.
 * `for (int y = SSD1306_HEIGHT - height; y < SSD1306_HEIGHT; y++) {`: Itera pelas linhas do display, de `y = 64 - height` até `y = 63`, para desenhar a barra do histograma.
 * `for (int x = i * CHANNEL_WIDTH; x < (i + 1) * CHANNEL_WIDTH - 1; x++) {`: Itera pelas colunas do bin `i`, de `x = i * 8` a `x = (i + 1) * 8 - 2` (`CHANNEL_WIDTH = 8`), desenhando a largura da barra (7 pixels para evitar sobreposição).
@@ -895,19 +884,19 @@ void draw_probabilities(float left_prob) {
     char right_buffer[8];
     snprintf(left_buffer, sizeof(left_buffer), "%.0f%%", left_prob);
     snprintf(right_buffer, sizeof(right_buffer), "%.0f%%", 100.0f - left_prob);
-    ssd1306_draw_string(display_buffer, 0, 28, left_buffer); // Esquerda, y=28
-    ssd1306_draw_string(display_buffer, 104, 28, right_buffer); // Direita, ajustado para caber
+    ssd1306_draw_string(display_buffer, 0, 28, left_buffer);
+    ssd1306_draw_string(display_buffer, 104, 28, right_buffer);
 }
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define a função `draw_probabilities`, que exibe as probabilidades de desvio no display OLED SSD1306. Explicação sucinta, comando por comando:
+Este trecho define a função `draw_probabilities`, que exibe as probabilidades de desvio no display OLED SSD1306.
 
 * `void draw_probabilities(float left_prob) {`: Declara a função `draw_probabilities`, que recebe a probabilidade de desvio à esquerda (`left_prob`) e não retorna valor.
 * `char left_buffer[8];`: Declara um array de 8 caracteres para armazenar a string da probabilidade à esquerda.
 * `char right_buffer[8];`: Declara um array de 8 caracteres para a probabilidade à direita.
 * `snprintf(left_buffer, sizeof(left_buffer), "%.0f%%", left_prob);`: Formata `left_prob` (ex.: 60.0f) como uma string sem decimais com símbolo de porcentagem (ex.: "60%") e armazena em `left_buffer`.
 * `snprintf(right_buffer, sizeof(right_buffer), "%.0f%%", 100.0f - left_prob);`: Formata a probabilidade à direita (`100.0f - left_prob`, ex.: 40.0f) como string (ex.: "40%") e armazena em `right_buffer`.
-* `ssd1306_draw_string(display_buffer, 0, 28, left_buffer); // Esquerda, y=28`: Desenha a string de `left_buffer` (ex.: "60%") no `display_buffer` na posição (x=0, y=28), à esquerda do display.
-* `ssd1306_draw_string(display_buffer, 104, 28, right_buffer); // Direita, ajustado para caber`: Desenha a string de `right_buffer` (ex.: "40%") na posição (x=104, y=28), à direita, ajustada para caber no display de 128 pixels.
+* `ssd1306_draw_string(display_buffer, 0, 28, left_buffer);`: Desenha a string de `left_buffer` (ex.: "60%") no `display_buffer` na posição (x=0, y=28), à esquerda do display.
+* `ssd1306_draw_string(display_buffer, 104, 28, right_buffer);`: Desenha a string de `right_buffer` (ex.: "40%") na posição (x=104, y=28), à direita, ajustada para caber no display de 128 pixels.
 * `}`: Fecha a função.
 
 ### Resumo
@@ -929,7 +918,7 @@ void update_display(Ball *balls, int ball_count, int *histogram) {
     ssd1306_update_display();
 }
 ```
-Este trecho, presente em `display.c` do projeto Galton Board, define a função `update_display`, que atualiza o display OLED SSD1306 com todos os elementos visuais da simulação. Explicação sucinta, comando por comando:
+Este trecho define a função `update_display`, que atualiza o display OLED SSD1306 com todos os elementos visuais da simulação.
 
 * `void update_display(Ball *balls, int ball_count, int *histogram) {`: Declara a função `update_display`, que recebe o array de bolinhas (`balls`), o número de bolinhas (`ball_count`), o histograma (`histogram`) e não retorna valor.
 * `clear_display_buffer();`: Chama `clear_display_buffer` para zerar o `display_buffer`, limpando o conteúdo anterior do display.
@@ -945,31 +934,4 @@ Este trecho, presente em `display.c` do projeto Galton Board, define a função 
 * `}`: Fecha a função.
 
 ### Resumo
-A função `update_display` limpa o buffer, desenha bolinhas ativas, o histograma, o contador de bolas (`total_balls`) e as probabilidades no `display_buffer`, e atualiza o display OLED, exibindo a simulação completa do Tabuleiro de Galton.
-
-**11. Função draw_counter()**:
-
-
-```c
-void draw_counter(int total_balls) {
-}
-```
-O trecho fornecido, presente em `display.c` do projeto Galton Board, define a função `draw_counter`, mas está vazio (`{}`), indicando que não possui implementação. Explicação sucinta:
-
-* `void draw_counter(int total_balls) {`: Declara a função `draw_counter`, que recebe o parâmetro `total_balls` (número total de bolas) e não retorna valor. Presume-se que sua intenção seja desenhar o contador de bolas no display OLED SSD1306.
-* `}`: Fecha a função, que atualmente não contém lógica.
-
-### Contexto e Observação
-- No projeto atual, a exibição de `total_balls` é feita diretamente em `update_display` com:
-  ```c
-  char buffer[16];
-  snprintf(buffer, sizeof(buffer), "Bolas: %d", total_balls);
-  ssd1306_draw_string(display_buffer, 0, 0, buffer);
-  ```
-- A função `draw_counter` parece ser um esboço ou placeholder para uma funcionalidade separada de desenho do contador, mas não é usada, pois `update_display` já realiza essa tarefa.
-- **Possível Intenção**: Mover a lógica de exibição de `total_balls` para `draw_counter` para modularizar o código.
-
-### Resumo
-A função `draw_counter` é uma declaração vazia em `display.c`, destinada a exibir `total_balls` no display, mas sem implementação. A funcionalidade de mostrar o contador de bolas já está em `update_display`, sugerindo que `draw_counter` pode ser um esboço ou redundante.
-
-Se quiser implementar `draw_counter` (ex.: mover a lógica de `snprintf` e `ssd1306_draw_string` para ela) ou removê-la, posso sugerir alterações!
+A função `update_display` limpa o buffer, desenha bolinhas ativas, o histograma, o contador de bolas (`total_balls`) e as probabilidades no `display_buffer`, e atualiza o display OLED, exibindo a simulação completa do Tabuleiro de Galton.  
