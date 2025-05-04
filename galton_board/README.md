@@ -50,6 +50,7 @@ O código é organizado em módulos para promover clareza, reusabilidade e manut
 
 ### Estrutura do Código
 O projeto é composto por seis arquivos principais:  
+
 **galton.c / galton.h**:  
    - Contém a lógica da simulação do Tabuleiro de Galton.  
    - Funções principais:  
@@ -62,25 +63,25 @@ O projeto é composto por seis arquivos principais:
 
 **main.c**:  
    - Orquestra a simulação, inicializando o display, gerenciando até 10 bolinhas ativas e chamando `calculate_statistics` a cada 100 bolas.  
-   - Loop principal: Atualiza bolinhas, registra quedas e refresca o display a cada 50ms.  
+   - Loop principal: Atualiza bolinhas, registra quedas e faz o refresh do display a cada 50ms.  
 
 **display.c / display.h**:  
    - Gerencia o display OLED SSD1306.  
    - Funções principais:  
      - `init_display`: Configura o display.  
      - `draw_histogram`: Desenha o histograma com altura proporcional às bolas (escala: 1 pixel por 2 bolas).  
-     - `update_display`: Atualiza o display com bolinhas e histograma.  
+     - `update_display`: Atualiza o display com bolinhas, total de bolas, histograma e probabilidades.  
 
 **CMakeLists.txt**:  
 O arquivo CMakeLists.txt é usado para configurar o processo de compilação do projeto, definindo as instruções para o CMake, uma ferramenta de construção, especificando:  
    - O nome do projeto e a versão do CMake necessária.  
-   - Os arquivos-fonte (ex.: main.c, galton.c, display.c) a serem compilados.  
+   - Os arquivos-fonte (main.c, galton.c, display.c) a serem compilados.  
    - As bibliotecas do Pico SDK (ex.: pico_stdlib, hardware_i2c) a serem vinculadas.  
    - Configurações como suporte a USB e UART para saída serial.  
    - Geração do executável para o Raspberry Pi Pico.  
 
 ### Detalhes Técnicos
-- **Display**: O SSD1306 é controlado via I2C, com buffer para renderizar bolinhas (pixels individuais) e histograma (retângulos por bin).
+- **Display**: O SSD1306 é controlado via I2C, com buffer para renderizar bolinhas (pixels individuais), histograma (retângulos por bin) e textos.
 - **Escala do Histograma**: Ajustada para `histogram[i] / 2` para crescimento lento, evitando preenchimento rápido da tela.
 - **Saída Serial**: Via USB, configurada com `stdio_usb_init`, exibindo estatísticas a cada 100 bolas para análise.
 - **Aleatoriedade**: O `get_rand_32` garante desvios uniformes (50% esquerda, 50% direita), validados pela função `test_randomness`.
@@ -97,16 +98,18 @@ A simulação produz uma distribuição binomial, com média próxima a 8.5 (cen
    - Display OLED SSD1306 (128x64, conectado via I2C).
 2. **Configuração**:
    - Instale o Pico SDK (versão 2.1.1 ou superior).
-   - Conecte o display aos pinos I2C do Pico (ex.: SDA ao GPIO 14, SCL ao GPIO 15).
+   - Conecte o display aos pinos I2C do Pico (SDA ao GPIO 14, SCL ao GPIO 15).
 3. **Compilação**:
    - Clone o repositório.
    - Execute `cmake` e `make` no diretório `build`.
    - Carregue o firmware no Pico via USB.
 4. **Saída**:
    - Visualize a chuva de bolinhas e o histograma no display.
-   - Conecte-se ao monitor serial (ex.: `minicom`, 115200 baud) para ver estatísticas a cada 100 bolas.
+   - Conecte-se a um monitor serial para as ver estatísticas a cada 100 bolas.  
+
 
 ### Explicação do Código:
+
 
 #### Orquestrador main.c:
 
@@ -179,7 +182,7 @@ Percebe-se que as probabilidades dos desvios para a direita ou para a esquerda t
 ```c
 int main() {
     stdio_usb_init();
-    sleep_ms(2000);
+    sleep_ms(3000); // Tempo para abrir o Monitor Serial
     printf("Iniciando Galton Board...\n");
 
     gpio_init(BUTTON_A);
@@ -194,7 +197,7 @@ int main() {
 
 * `int main() {`: Define a função principal do programa, o ponto de entrada da execução.
 * `stdio_init_all();`: Uma função fornecida pelo SDK do Pico. Ela inicializa os periféricos de entrada e saída padrão. Na maioria dos casos, isso configura a comunicação serial (UART) para que se possa usar `printf` para enviar dados para o monitor serial do seu computador.
-* `sleep_ms(2000);`: Outra função do SDK do Pico. Ela pausa a execução do programa pelo número de milissegundos especificado (neste caso, 2000 ms ou 2 segundos). Isso é comumente usado para dar tempo para que o monitor serial da IDE seja conectado e esteja pronto para receber a saída antes que o programa comece a enviar dados.
+* `sleep_ms(3000);`: Outra função do SDK do Pico. Ela pausa a execução do programa pelo número de milissegundos especificado (neste caso, 2000 ms ou 2 segundos). Isso é comumente usado para dar tempo para que o monitor serial da IDE seja conectado e esteja pronto para receber a saída antes que o programa comece a enviar dados.
 * `printf("Iniciando Galton Board...\n");`: Imprime uma mensagem de inicialização no monitor serial.  
 ```c
 gpio_init(BUTTON_A);
@@ -414,6 +417,7 @@ Este trecho finaliza o loop principal, garantindo a integridade do histograma, a
 
 * `}`: Fecha a função `main`.  
 
+
 #### Simulador galton.c:
 
 **1. Inclusões**:
@@ -559,9 +563,6 @@ Este trecho define a função `init_ball`, que inicializa uma bolinha para a sim
 * `ball->collisions = 0;`: Inicializa o contador de colisões como 0, rastreando quantas vezes a bolinha desviou (máximo de 15).
 * `}`: Fecha a função.
 
-### Resumo
-A função `init_ball` configura uma bolinha, posicionando-a no centro superior do display (x=64, y=0), ativando-a e zerando suas colisões, preparando-a para a simulação de queda no Tabuleiro de Galton.
-
 **7. Função update_ball()**:
 
 ```c
@@ -607,9 +608,6 @@ Este trecho define a função `update_ball`, que atualiza o estado de uma bolinh
 * `}`: Fecha o bloco condicional de altura.
 * `}`: Fecha a função.
 
-### Resumo
-A função `update_ball` move uma bolinha ativa para baixo, aplica desvios aleatórios (±4 pixels) em até 15 colisões, mantém a bolinha dentro dos limites do display (x: 0 a 127, y: 0 a 64), e a desativa ao atingir o fundo, simulando a trajetória no Tabuleiro de Galton.
-
 **8. Função register_ball_landing()**:
 
 ```c
@@ -631,9 +629,6 @@ Este trecho define a função `register_ball_landing`, que registra a posição 
 * `}`: Fecha o bloco condicional.
 * `}`: Fecha a função.
 
-### Resumo
-A função `register_ball_landing` determina o bin (0 a 15) onde uma bolinha caiu com base em sua posição `x`, incrementa a contagem no `histogram` para esse bin e atualiza `total_balls`, registrando a distribuição da simulação no Tabuleiro de Galton.
-
 **9. Função get_left_probability()**:
 
 ```c
@@ -646,9 +641,6 @@ Este trecho define a função `get_left_probability`, que retorna a probabilidad
 * `float get_left_probability() {`: Declara a função `get_left_probability`, que retorna um valor do tipo `float` e não recebe parâmetros.
 * `return left_prob;`: Retorna o valor da variável global `left_prob` (definida em `galton.c`), que armazena a probabilidade de uma bolinha desviar à esquerda (ex.: 50.0f para 50%, 60.0f para 60%).
 * `}`: Fecha a função.
-
-### Resumo
-A função `get_left_probability` fornece acesso à variável global `left_prob`, permitindo que outros módulos (ex.: `display.c`) obtenham a probabilidade atual de desvio à esquerda para exibição no display (ex.: "60%"), mantendo a lógica de probabilidade encapsulada em `galton.c`.
 
 
 #### Gerenciador de Exibição display.c:
@@ -674,9 +666,6 @@ Este trecho importa as bibliotecas necessárias para gerenciar o display OLED SS
 * `#include "ssd1306_i2c.h"`: Inclui o cabeçalho específico para comunicação I2C com o SSD1306, fornecendo funções como `ssd1306_draw_string`.
 * `#include "display.h"`: Inclui o cabeçalho `display.h`, que define protótipos das funções de `display.c` (ex.: `init_display`, `update_display`) e constantes relacionadas.
 
-### Resumo
-Este trecho importa bibliotecas padrão, do Pico SDK e específicas do SSD1306, além do cabeçalho `display.h`, fornecendo as ferramentas necessárias para configurar, controlar e atualizar o display OLED, exibindo bolinhas, histograma, contador de bolas e probabilidades na simulação do Tabuleiro de Galton.
-
 **2. Definições**:
 
 ```c
@@ -688,9 +677,6 @@ Este trecho define constantes e variáveis para gerenciar o buffer do display OL
 
 * `#define BUFFER_LENGTH (SSD1306_WIDTH * SSD1306_HEIGHT / 8)`: Define a constante `BUFFER_LENGTH` como o tamanho do buffer do display, calculado como `SSD1306_WIDTH` (128) × `SSD1306_HEIGHT` (64) ÷ 8. Como o SSD1306 usa 1 bit por pixel e 8 bits por byte, o buffer tem 1024 bytes (128 × 64 ÷ 8).
 * `static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];`: Declara uma variável estática `display_buffer`, um array de `uint8_t` com tamanho `BUFFER_LENGTH` (1024 bytes). Ela armazena o estado dos pixels do display (1 bit por pixel), usada para desenhar bolinhas, histograma e texto antes de enviar ao SSD1306.
-
-### Resumo
-Este trecho define o tamanho do buffer do display (1024 bytes) e cria um array estático para armazenar o estado dos pixels, permitindo manipular e atualizar o conteúdo visual (bolinhas, histograma, texto) na simulação do Tabuleiro de Galton antes de enviá-lo ao display OLED.
 
 **3. Função clear_display_buffer()**:
 
@@ -750,12 +736,6 @@ Este trecho define a função `ssd1306_update_display`, que atualiza o display O
 * `i2c_write_blocking(i2c1, 0x3C, data_buffer, BUFFER_LENGTH + 1, false);`: Envia os 1025 bytes (controle + dados) via I2C para o display, atualizando a tela com o conteúdo do `display_buffer`.
 * `}`: Fecha a função.
 
-### Resumo
-A função `ssd1306_update_display` configura o intervalo de colunas (0-127) e páginas (0-7) do SSD1306 via comandos I2C e envia o conteúdo do `display_buffer` (bolinhas, histograma, texto) para atualizar a tela, exibindo a simulação do Tabuleiro de Galton.
-
-
-
-
 **5. Função ssd1306_setup()**:
 
 ```c
@@ -793,9 +773,6 @@ Este trecho define a função `ssd1306_setup`, que inicializa o display OLED SSD
 * `i2c_write_blocking(i2c1, 0x3C, init_commands, sizeof(init_commands), false);`: Envia a sequência de comandos via I2C (interface `i2c1`, endereço 0x3C) para o SSD1306, configurando o display com as definições acima.
 * `}`: Fecha a função.
 
-### Resumo
-A função `ssd1306_setup` envia uma sequência de comandos I2C para inicializar o display SSD1306, configurando parâmetros como resolução, contraste e modo de exibição, preparando-o para mostrar a simulação do Tabuleiro de Galton.
-
 **6. Função init_display()**:
 
 ```c
@@ -826,9 +803,6 @@ Este trecho define a função `init_display`, que inicializa o display OLED SSD1
 * `clear_display_buffer();`: Zera o buffer novamente, preparando para a próxima atualização.
 * `ssd1306_update_display();`: Envia o buffer zerado ao display mais uma vez, assegurando que a tela esteja completamente limpa.
 * `}`: Fecha a função.
-
-### Resumo
-A função `init_display` configura a interface I2C nos pinos 14 (SDA) e 15 (SCL), inicializa o SSD1306 com comandos específicos, e limpa o display duas vezes, preparando-o para exibir a simulação do Tabuleiro de Galton.
 
 **7. Função draw_histogram()**:
 
@@ -862,11 +836,8 @@ Este trecho define a função `draw_histogram`, que desenha o histograma no disp
 * `}`: Fecha o bloco condicional do bin.
 * `}`: Fecha a função.
 
-### Resumo
-A função `draw_histogram` desenha barras no display para cada bin com bolas, com altura proporcional à contagem (`histogram[i] / 2`), limitada a 54 pixels, ocupando 7 pixels de largura por bin, visualizando a distribuição das bolas no Tabuleiro de Galton.
-
-
 **8. Função draw_ball()**:
+
 ```c
 void draw_ball(Ball *ball) {
     if (ball->active) {
@@ -874,7 +845,7 @@ void draw_ball(Ball *ball) {
     }
 }
 ```
-
+To be written
 
 
 **9. Função draw_probabilities()**:
@@ -898,9 +869,6 @@ Este trecho define a função `draw_probabilities`, que exibe as probabilidades 
 * `ssd1306_draw_string(display_buffer, 0, 28, left_buffer);`: Desenha a string de `left_buffer` (ex.: "60%") no `display_buffer` na posição (x=0, y=28), à esquerda do display.
 * `ssd1306_draw_string(display_buffer, 104, 28, right_buffer);`: Desenha a string de `right_buffer` (ex.: "40%") na posição (x=104, y=28), à direita, ajustada para caber no display de 128 pixels.
 * `}`: Fecha a função.
-
-### Resumo
-A função `draw_probabilities` formata as probabilidades de desvio à esquerda (`left_prob`) e à direita (`100 - left_prob`) como strings (ex.: "60%", "40%") e as exibe nas laterais do display (y=28), visualizando as configurações atuais do Tabuleiro de Galton.
 
 **10. Função update_display()**:
 
@@ -932,6 +900,3 @@ Este trecho define a função `update_display`, que atualiza o display OLED SSD1
 * `draw_probabilities(get_left_probability());`: Chama `draw_probabilities` com a probabilidade atual (`get_left_probability`), desenhando as porcentagens (ex.: "60%" à esquerda, "40%" à direita) no `display_buffer`.
 * `ssd1306_update_display();`: Chama `ssd1306_update_display` para enviar o `display_buffer` ao SSD1306 via I2C, atualizando o display com todos os elementos.
 * `}`: Fecha a função.
-
-### Resumo
-A função `update_display` limpa o buffer, desenha bolinhas ativas, o histograma, o contador de bolas (`total_balls`) e as probabilidades no `display_buffer`, e atualiza o display OLED, exibindo a simulação completa do Tabuleiro de Galton.  
