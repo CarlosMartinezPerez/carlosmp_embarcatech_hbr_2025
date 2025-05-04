@@ -37,12 +37,12 @@ A simulação digital desenvolvida neste projeto recria o comportamento de um Ta
 ### Características
 - A simulação utiliza o gerador de números aleatórios do Pico (`get_rand_32`) para garantir desvios aleatórios.
 - Até 10 bolinhas podem estar ativas simultaneamente, caindo em uma "chuva" contínua.
-- Repare que a probabilidade teórica de uma bolinha cair nos bins extremos (1 ou 16) é meio elevado a 15, vezes 100% ou 0,003%, aproximadamente. Só existe uma maneira de uma bolinha atingir o bin 16, ela tem que desviar à direita nas 15 colisões. Já para chegar aos bins 8 ou 9 (centrais), a bolinha tem 6435 (15C7 ou 15C8) caminhos diferentes para fazer. O cálculo dessa probabilidade é dado pela combinação de 15, tomado 8 a 8 (ou 7 a 7, dá na nesna), vezes meio elevado a 15, vezes 100% ou 6435 vezes 0,003%, aproximadamente 19.64\%. A diferença nessas probabilidades (da bolinha cair nos bins 8 ou 9 ou de cair nos bins 1 ou 16) reflete bem a natureza binomial da simulação.
+- Repare que a probabilidade teórica de uma bolinha cair nos bins extremos (1 ou 16) é meio elevado a 15, vezes 100% ou 0,003%, aproximadamente. Só existe uma maneira de uma bolinha atingir o bin 16, ela tem que desviar à direita nas 15 colisões. Já para chegar aos bins 8 ou 9 (centrais), a bolinha tem 6435 (15C7 ou 15C8) caminhos diferentes para fazer. O cálculo dessa probabilidade é dado pela combinação de 15, tomado 8 a 8 (ou 7 a 7, dá na mesma), vezes meio elevado a 15, vezes 100% ou 6435 vezes 0,003%, aproximadamente 19.64\%. A diferença nessas probabilidades (da bolinha cair nos bins 8 ou 9 ou de cair nos bins 1 ou 16) reflete bem a natureza binomial da simulação.
 
 ## 3. Análise do Código
 
 ### Modularização
-O código é organizado em módulos para promover clareza, reusabilidade e manutenção. A modularização separa a lógica da simulação, a interface do display e a inicialização do sistema, oferecendo as seguintes vantagens:
+O código é organizado em módulos para promover clareza, reusabilidade e manutenibilidade. A modularização separa a lógica da simulação, a interface do display e a inicialização do sistema, oferecendo as seguintes vantagens:
 - **Clareza**: Cada módulo tem uma responsabilidade única, facilitando a compreensão.
 - **Manutenção**: Alterações em um módulo (ex.: ajustar a escala do histograma) não afetam outros.
 - **Reusabilidade**: Funções como `random_direction` podem ser usadas em outros projetos.
