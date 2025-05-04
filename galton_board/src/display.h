@@ -10,7 +10,6 @@ void ssd1306_setup();
 void draw_histogram(int *histogram);
 void draw_ball(Ball *ball);
 void update_display(Ball *balls, int ball_count, int *histogram);
-void draw_counter(int total_balls);
 void draw_probabilities(float left_prob);
 
 #endif

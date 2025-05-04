@@ -16,7 +16,7 @@ int main() { // Função para teste de aleatoriedade durante o desenvolvimento
 
 int main() {
     stdio_usb_init();
-    sleep_ms(2000);
+    sleep_ms(3000); // Tempo para abrir o Monitor Serial
     printf("Iniciando Galton Board...\n");
 
     gpio_init(BUTTON_A);

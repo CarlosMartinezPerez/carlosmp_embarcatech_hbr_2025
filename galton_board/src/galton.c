@@ -16,8 +16,8 @@ bool random_direction() {
 void test_randomness(int trials) {
     int left = 0, right = 0;
     for (int i = 0; i < trials; i++) {
-        if (random_direction() == 0) left++;
-        else right++;
+        if (random_direction() == 0) right++;
+        else left++;
     }
     printf("Esquerda: %d (%.2f%%), Direita: %d (%.2f%%)\n",
             left, (float)left / trials * 100,

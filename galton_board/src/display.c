@@ -102,6 +102,3 @@ void update_display(Ball *balls, int ball_count, int *histogram) {
     draw_probabilities(get_left_probability());
     ssd1306_update_display();
 }
-
-void draw_counter(int total_balls) {
-}
