@@ -1,6 +1,6 @@
 # GALTON BOARD
 
-Este projeto implementa uma simulação digital de um **Tabuleiro de Galton** (Galton Board) utilizando um microcontrolador Raspberry Pi Pico e um display OLED SSD1306 (128x64 pixels), todos presentes na placa BitDogLab. A simulação modela a queda de bolinhas através de fileiras de pinos, resultando em uma distribuição binomial, que é visualizada em um histograma no display e analisada via saída serial. A distribuição das bolinhas no histograma, para um número suficientemente grande de ensaios, se aproxima cada vez mais, da forma de uma curva gaussiana (ou normal, denotada por N(0,1) se na sua forma padrão, conforme estabelece o Teorema Central do Limite). O [vídeo](https://www.youtube.com/watch?v=gffrqLjbuIY&t=18s), mostra o projeto funcionando.
+Este projeto implementa uma simulação digital de um **Tabuleiro de Galton** (Galton Board) utilizando um microcontrolador Raspberry Pi Pico e um display OLED SSD1306 (128x64 pixels), todos presentes na placa BitDogLab. A simulação modela a queda de bolinhas através de fileiras de pinos, resultando em uma distribuição binomial, que é visualizada em um histograma no display e analisada via saída serial. A distribuição das bolinhas no histograma, para um número suficientemente grande de ensaios, se aproxima cada vez mais, da forma de uma curva gaussiana (ou normal, denotada por N(0,1) se na sua forma padrão, conforme estabelece o Teorema Central do Limite). Este [vídeo](https://www.youtube.com/watch?v=gffrqLjbuIY&t=18s) mostra o projeto funcionando na BitDogLab.  
 
 ## 1. O que é um Tabuleiro de Galton?
 
@@ -139,7 +139,7 @@ A simulação produz uma distribuição binomial, com média próxima a 8.5 (cen
 #include "display.h"
 ```
 
-* `#include <stdio.h>`: Inclui a biblioteca padrão de entrada e saída do C. Isso fornece funções como `printf` para imprimir informações no monitor serial.
+* ```c#include <stdio.h>```: Inclui a biblioteca padrão de entrada e saída do C. Isso fornece funções como `printf` para imprimir informações no monitor serial.
 * `#include "pico/stdlib.h"`: Inclui a biblioteca padrão do SDK do Raspberry Pi Pico. Essa biblioteca oferece funções essenciais para interagir com o hardware do Pico, como inicialização de periféricos, controle de GPIO, e funcionalidades de tempo.
 * `#include "galton.h"`: Inclui um arquivo de cabeçalho chamado `galton.h`. Este arquivo provavelmente contém declarações de tipos de dados (como a struct `Ball`) e protótipos de funções relacionadas à lógica da simulação da placa de Galton (como `init_ball` e `update_ball`).
 * `#include "display.h"`: Inclui um arquivo de cabeçalho chamado `display.h`. Este arquivo provavelmente contém protótipos de funções responsáveis por inicializar e atualizar a visualização da simulação (como `init_display` e `update_display`). A ausência da matriz de LEDs sugere que a visualização pode ser feita no monitor serial ou em outro dispositivo de display conectado ao Pico.
