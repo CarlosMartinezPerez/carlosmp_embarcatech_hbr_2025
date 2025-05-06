@@ -1,6 +1,6 @@
 # GALTON BOARD
 
-Este projeto implementa uma simulação digital de um **Tabuleiro de Galton** (Galton Board) utilizando um microcontrolador Raspberry Pi Pico e um display OLED SSD1306 (128x64 pixels), todos presentes na placa BitDogLab. A simulação modela a queda de bolinhas através de fileiras de pinos, resultando em uma distribuição binomial, que é visualizada em um histograma no display e analisada via saída serial. A distribuição das bolinhas no histograma, para um número suficientemente grande de ensaios, se aproxima cada vez mais, da forma de uma curva gaussiana (ou normal, denotada por N(0,1) se na sua forma padrão, conforme estabelece o Teorema Central do Limite).
+Este projeto implementa uma simulação digital de um **Tabuleiro de Galton** (Galton Board) utilizando um microcontrolador Raspberry Pi Pico e um display OLED SSD1306 (128x64 pixels), todos presentes na placa BitDogLab. A simulação modela a queda de bolinhas através de fileiras de pinos, resultando em uma distribuição binomial, que é visualizada em um histograma no display e analisada via saída serial. A distribuição das bolinhas no histograma, para um número suficientemente grande de ensaios, se aproxima cada vez mais, da forma de uma curva gaussiana (ou normal, denotada por N(0,1) se na sua forma padrão, conforme estabelece o Teorema Central do Limite). O [vídeo](https://www.youtube.com/watch?v=gffrqLjbuIY&t=18s), mostra o projeto funcionando.
 
 ## 1. O que é um Tabuleiro de Galton?
 
@@ -862,8 +862,13 @@ void draw_ball(Ball *ball) {
     }
 }
 ```
-To be written
+Este trecho define a função `draw_ball`, que desenha uma bolinha ativa no display OLED SSD1306.
 
+* `void draw_ball(Ball *ball) {`: Declara a função `draw_ball`, que recebe um ponteiro para uma estrutura `Ball` (definida em `galton.h`) e não retorna valor.
+* `if (ball->active) {`: Verifica se a bolinha está ativa (`active = true`), indicando que está caindo e deve ser desenhada.
+* `ssd1306_set_pixel(display_buffer, (int)ball->x, (int)ball->y, true);`: Define um pixel no `display_buffer` como ativado (`true`) nas coordenadas `(x, y)` da bolinha, convertendo `ball->x` e `ball->y` (tipo `float`) para `int`. Isso desenha a bolinha como um único pixel no display.
+* `}`: Fecha o bloco condicional.
+* `}`: Fecha a função.
 
 **9. Função draw_probabilities()**:
 ```c
@@ -917,6 +922,3 @@ Este trecho define a função `update_display`, que atualiza o display OLED SSD1
 * `draw_probabilities(get_left_probability());`: Chama `draw_probabilities` com a probabilidade atual (`get_left_probability`), desenhando as porcentagens (ex.: "60%" à esquerda, "40%" à direita) no `display_buffer`.
 * `ssd1306_update_display();`: Chama `ssd1306_update_display` para enviar o `display_buffer` ao SSD1306 via I2C, atualizando o display com todos os elementos.
 * `}`: Fecha a função.
-
-
-
