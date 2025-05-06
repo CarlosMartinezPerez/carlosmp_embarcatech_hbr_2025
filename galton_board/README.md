@@ -922,3 +922,949 @@ Este trecho define a função `update_display`, que atualiza o display OLED SSD1
 * `draw_probabilities(get_left_probability());`: Chama `draw_probabilities` com a probabilidade atual (`get_left_probability`), desenhando as porcentagens (ex.: "60%" à esquerda, "40%" à direita) no `display_buffer`.
 * `ssd1306_update_display();`: Chama `ssd1306_update_display` para enviar o `display_buffer` ao SSD1306 via I2C, atualizando o display com todos os elementos.
 * `}`: Fecha a função.
+
+
+__________________________________________________________________________________________________________________________________________
+
+# GALTON BOARD
+
+This project implements a digital simulation of a **Galton Board** using a Raspberry Pi Pico microcontroller and an SSD1306 OLED display (128x64 pixels), all present on the BitDogLab board. The simulation models the fall of balls through rows of pins, resulting in a binomial distribution, which is visualized as a histogram on the display and analyzed via serial output. The distribution of balls in the histogram, for a sufficiently large number of trials, increasingly approximates the shape of a Gaussian (or normal) curve, denoted as N(0,1) in its standard form, as established by the Central Limit Theorem. This [video](https://www.youtube.com/watch?v=gffrqLjbuIY&t=18s) shows the project running on the BitDogLab.
+
+## 1. What is a Galton Board?
+
+The Galton Board, also known as a Quincunx, is a device invented by Sir Francis Galton in the 19th century to demonstrate the Central Limit Theorem and the binomial distribution. It consists of a vertical board with rows of pins arranged in a triangular pattern. Balls are released from the top at the center of the board and, upon colliding with the pins, randomly deflect to the left or right with equal probability (50%). At the bottom, the balls accumulate in compartments (bins), forming a bell-shaped curve that approximates the shape of a normal distribution for a large number of released balls (trials).
+
+The beauty of the Galton Board lies in its ability to visually and intuitively illustrate fundamental statistical concepts, making it widely used in studies of Probability, Statistics, and Physics. A highly illustrative example of this demonstration can be seen in [this video](https://www.youtube.com/watch?v=L4RMRq1FUcg), where a Galton Board is put into action, highlighting the formation of the bell-shaped curve with thousands of balls. The underlying concept is that predictable outcomes can often be obtained even when dealing with completely random events.
+
+The binomial distribution is a probability distribution that describes the likelihood of a certain number of successes ("S") in a fixed number of independent trials ("n"), where each trial has only two possible outcomes (success or failure) with the same probability ("p" and "1-p") for each trial. Newton and Pascal played significant roles in developing the theory of binomial coefficients, which are fundamental to the binomial distribution.
+
+To describe the binomial distribution, imagine a game with two possible outcomes: winning (success) or losing (failure). If the game is played n times, the binomial distribution can indicate the probability of winning x times (where x is the number of successes). The probability of obtaining exactly x successes in n trials is given by: P(x) = (nCx) * p^x * (1-p)^(n-x), where nCx is the binomial coefficient (combination of n elements taken x at a time), representing the number of ways to achieve x successes among n trials.
+
+Blaise Pascal created Pascal's Triangle, a visual representation of binomial coefficients. Each number in the triangle is the sum of the two numbers above it, and the binomial coefficients can be read directly from the triangle's rows. Isaac Newton expanded on Pascal's work and developed Newton's Binomial Theorem, which provides a formula for expanding a power of a binomial (x + y)^n. This formula uses the binomial coefficients, which are the same as those in Pascal's Triangle. Binomial coefficients are fundamental for calculating probabilities in binomial distribution scenarios, such as hypothesis testing or data analysis. Newton and Pascal significantly contributed to the development and understanding of these coefficients.
+
+## 2. The Digital Simulation (Digital Twin)
+
+The digital simulation developed in this project recreates the behavior of a Galton Board on a 128x64 pixel OLED display, functioning as a "digital twin" of the physical device. The implementation details are described below:
+
+### Simulation Structure
+- **Display and Bins**: The 128 horizontal pixels of the display are divided into 16 bins, each 8 pixels wide (128 ÷ 16 = 8). These bins, located at the bottom of the display, collect the balls after their fall.
+- **Pins and Rows**: Above the 16 bins, there are 15 rows of pins arranged in a triangular pattern (15 pins in the first row just above the bins, 14 in the row above, and so on).
+- **Pin Geometry**: The pins form equilateral triangles with 8-pixel sides. The vertical distance between rows is calculated as the height of an equilateral triangle with an 8-pixel side, or 4 times the square root of 3, approximately 6.93 (7 pixels), but the simulation abstracts this to keep the logic simple, as 15 rows of 7 pixels would not fit in the display's height.
+- **Ball Behavior**: Each ball starts at the center of the board (x = 64) and undergoes 15 collisions, randomly deflecting ±4 pixels (left or right) per collision, with a 50% chance for each direction. After 15 collisions, the ball lands in one of the 16 bins.
+- **Extreme Cases**:
+  - Maximum right: \( 64 + 15 \times 4 = 124 \) (bin 16).
+  - Maximum left: \( 64 - 15 \times 4 = 4 \) (bin 1).
+- **Visualization**: Balls are displayed as dots on the screen during their fall, and the histogram at the bottom is drawn with rectangles, where every 2 balls increment 1 pixel of height (scaled to avoid filling the screen too quickly).
+- **Serial Output**: Every 100 balls, the program displays on the Serial Monitor:
+  - Total number of balls.
+  - Number of balls in each bin.
+  - Mean of the distribution.
+  - Standard deviation of the distribution.
+- **Probability Control**: Two buttons, connected to GPIO pins 5 (Button A) and 6 (Button B), allow dynamic adjustment of the balls' deflection probabilities. Initially, the probability is 50% left and 50% right. Each press of Button A increases the left deflection probability by 10% (and reduces the right by 10%), up to a maximum of 90% left / 10% right. Button B does the opposite, increasing the right deflection probability up to 10% left / 90% right. The selected percentages are displayed on the sides of the display, allowing visualization of the impact of these changes on the binomial distribution, which becomes asymmetric as probabilities change.
+
+### Features
+- The simulation uses the Pico's random number generator (`get_rand_32`) to ensure random deflections.
+- Up to 10 balls can be active simultaneously, falling in a continuous "rain."
+- Note that the theoretical probability of a ball landing in the extreme bins (1 or 16) is (1/2)^15 × 100%, or approximately 0.003%. There is only one way for a ball to reach bin 16: it must deflect right in all 15 collisions. In contrast, to reach bins 8 or 9 (central), a ball has 6435 (15C7 or 15C8) different paths. The probability calculation is given by the combination of 15 taken 8 at a time (or 7 at a time, which yields the same result), times (1/2)^15, times 100%, or 6435 × 0.003%, approximately 19.64%. The difference in these probabilities (landing in bins 8 or 9 versus bins 1 or 16) clearly reflects the binomial nature of the simulation.
+
+## 3. Serial Monitor Output
+
+Below is the serial monitor output after 200 balls have fallen on the board:
+
+---- Opened the serial port COM4 ----  
+Starting Galton Board...  
+Total Balls: 100  
+Bins: [1]: 0 [2]: 0 [3]: 0 [4]: 2 [5]: 4 [6]: 11 [7]: 8 [8]: 22 [9]: 25 [10]: 17 [11]: 5 [12]: 4 [13]: 2 [14]: 0 [15]: 0 [16]: 0   
+Mean: 8.50  
+Standard Deviation: 1.86  
+
+Total Balls: 200  
+Bins: [1]: 0 [2]: 0 [3]: 0 [4]: 2 [5]: 6 [6]: 23 [7]: 25 [8]: 41 [9]: 46 [10]: 34 [11]: 13 [12]: 6 [13]: 4 [14]: 0 [15]: 0 [16]: 0   
+Mean: 8.50  
+Standard Deviation: 1.80  
+
+## 4. Code Analysis
+
+### Modularization
+The code is organized into modules to promote clarity, reusability, and maintainability. Modularization separates the simulation logic, display interface, and system initialization, offering the following advantages:
+- **Clarity**: Each module has a single responsibility, making it easier to understand.
+- **Maintenance**: Changes in one module (e.g., adjusting the histogram scale) do not affect others.
+- **Reusability**: Functions like `random_direction` can be reused in other projects.
+- **Debugging**: Isolating errors in specific modules speeds up fixes.
+
+### Code Structure
+The project consists of six main files:
+
+**galton.c / galton.h**:  
+   - Contains the logic of the Galton Board simulation.  
+   - Main functions:  
+     - `init_ball`: Initializes a ball at the center (x = 64, y = 0).  
+     - `update_ball`: Moves the ball vertically and performs horizontal deflections (±4 pixels) in 15 collisions.  
+     - `register_ball_landing`: Registers the ball in a bin and updates the histogram.  
+     - `calculate_statistics`: Calculates and displays (every 100 balls) the total balls, count per bin, mean, and standard deviation.  
+     - `test_randomness`: Tests the randomness of the generator (`random_direction`), useful for debugging.  
+   - Global variables: `histogram` (ball count per bin) and `total_balls` (total accumulated).
+
+**main.c**:  
+   - Orchestrates the simulation, initializing the display, managing up to 10 active balls, and calling `calculate_statistics` every 100 balls.  
+   - Main loop: Updates balls, registers landings, and refreshes the display every 50ms.
+
+**display.c / display.h**:  
+   - Manages the SSD1306 OLED display.  
+   - Main functions:  
+     - `init_display`: Configures the display.  
+     - `draw_histogram`: Draws the histogram with height proportional to the balls (scale: 1 pixel per 2 balls).  
+     - `update_display`: Updates the display with balls, total balls, histogram, and probabilities.
+
+**CMakeLists.txt**:  
+The CMakeLists.txt file is used to configure the project’s build process, defining instructions for CMake, a build tool, specifying:  
+   - The project name and required CMake version.  
+   - Source files (main.c, galton.c, display.c) to be compiled.  
+   - Pico SDK libraries (e.g., pico_stdlib, hardware_i2c) to be linked.  
+   - Configurations such as USB and UART support for serial output.  
+   - Generation of the executable for the Raspberry Pi Pico.
+
+### Technical Details
+- **Display**: The SSD1306 is controlled via I2C, with a buffer to render balls (individual pixels), histogram (rectangles per bin), and text.
+- **Histogram Scale**: Adjusted to `histogram[i] / 2` for slow growth, preventing rapid screen filling.
+- **Serial Output**: Via USB, configured with `stdio_usb_init`, displaying statistics every 100 balls for analysis.
+- **Randomness**: The `get_rand_32` ensures uniform deflections (50% left, 50% right), validated by the `test_randomness` function.
+
+### Expected Results
+The simulation produces a binomial distribution, with a mean close to 8.5 (center of the 16 bins) and a standard deviation close to 2, reflecting the 15 collisions with 50% probability. After 975 balls, for example, the following was observed:
+- Mean: ~8.49
+- Standard Deviation: ~1.87
+- Peak in bins 8-9, with zero balls in the extremes (bins 1 and 16), consistent with the theoretical probability of 0.003%.
+
+### How to Run
+1. **Hardware**:
+   - Raspberry Pi Pico (or Pico W).
+   - SSD1306 OLED display (128x64, connected via I2C).
+2. **Setup**:
+   - Install the Pico SDK (version 2.1.1 or higher).
+   - Connect the display to the Pico’s I2C pins (SDA to GPIO 14, SCL to GPIO 15).
+3. **Compilation**:
+   - Clone the repository.
+   - Run `cmake` and `make` in the `build` directory.
+   - Upload the firmware to the Pico via USB.
+4. **Output**:
+   - View the ball rain and histogram on the display.
+   - Connect to a serial monitor to see statistics every 100 balls.
+
+### Code Explanation:
+
+#### Orchestrator main.c:
+
+**1. Includes:**
+
+```c
+#include <stdio.h>
+#include "pico/stdlib.h"
+#include "galton.h"
+#include "display.h"
+```
+
+* `#include <stdio.h>`: Includes the standard C input/output library, providing functions like `printf` for printing information to the serial monitor.
+* `#include "pico/stdlib.h"`: Includes the standard Pico SDK library, offering essential functions for interacting with the Pico hardware, such as peripheral initialization, GPIO control, and timing functions.
+* `#include "galton.h"`: Includes the `galton.h` header file, which likely contains declarations for data types (e.g., the `Ball` struct) and function prototypes related to the Galton Board simulation logic (e.g., `init_ball`, `update_ball`).
+* `#include "display.h"`: Includes the `display.h` header file, which likely contains prototypes for functions responsible for initializing and updating the simulation visualization (e.g., `init_display`, `update_display`). The absence of an LED matrix suggests visualization is done via the serial monitor or another display device connected to the Pico.
+
+**2. Definitions:**
+
+```c
+#define BUTTON_A 5
+#define BUTTON_B 6
+#define DEBOUNCE_MS 200
+```
+
+This section defines constants necessary for hardware interaction. The `BUTTON_A` and `BUTTON_B` macros specify GPIO pins 5 and 6 on the Raspberry Pi Pico, to which physical buttons are connected. The `DEBOUNCE_MS` constant sets a 200-millisecond interval for the debounce mechanism, ensuring only one button press is registered at a time, even in the presence of typical electrical noise from mechanical buttons.
+
+**3. Randomness Test:**
+
+```c
+/*
+int main() { // Function for testing randomness during development
+    stdio_init_all();
+    sleep_ms(2000);  // Time to open the serial monitor
+    test_randomness(100000); // Adjust the number of trials
+}*/
+```
+
+In response to a specific project requirement, this commented section represents an alternative `main()` function used early in development to test the quality of the project’s random number generator. The function initializes serial communication with `stdio_init_all()`, waits 2000 milliseconds (`sleep_ms(2000)`) to allow connection to a serial monitor, and calls `test_randomness(100000)`, which runs 100,000 iterations of the `random_direction` function to verify if the left and right deflection probabilities are balanced (i.e., approximately 50% each with the default setting). Results are displayed on the serial monitor, showing the count and percentage of left and right deflections. Though commented out in the final version, this test was crucial for validating the system’s randomness, ensuring the binomial distribution of the simulation accurately reflected the expected probabilities.
+
+Results of randomness tests conducted with the `test_randomness` and `random_direction` functions in `galton.c` (explained later):  
+10 trials:  
+Left: 5 (50.00%), Right: 5 (50.00%)  
+Here, luck played a role. Typically, results show 60% or 70% for one side due to the small number of trials.
+
+100 trials:  
+Left: 48 (48.00%), Right: 52 (52.00%)  
+
+1,000 trials:  
+Left: 491 (49.10%), Right: 509 (50.90%)  
+
+10,000 trials:  
+Left: 4996 (49.96%), Right: 5004 (50.04%)  
+
+100,000 trials:  
+Left: 49975 (49.97%), Right: 50025 (50.02%)  
+
+1,000,000 trials:  
+Left: 499638 (49.96%), Right: 500362 (50.04%)
+
+10,000,000 trials:  
+Left: 5000521 (50.01%), Right: 4999479 (49.99%)  
+
+It is evident that the probabilities of deflections to the right or left tend toward 50% as the number of trials increases.
+
+**4. `main()` Function:**
+
+```c
+int main() {
+    stdio_usb_init();
+    sleep_ms(3000); // Time to open the Serial Monitor
+    printf("Starting Galton Board...\n");
+
+    gpio_init(BUTTON_A);
+    gpio_init(BUTTON_B);
+    gpio_set_dir(BUTTON_A, GPIO_IN);
+    gpio_set_dir(BUTTON_B, GPIO_IN);
+    gpio_pull_up(BUTTON_A);
+    gpio_pull_up(BUTTON_B);
+
+    init_display();
+```
+
+* `int main() {`: Defines the program’s main function, the entry point of execution.
+* `stdio_usb_init();`: A Pico SDK function that initializes standard input/output peripherals, typically configuring USB serial communication to allow `printf` to send data to the computer’s serial monitor.
+* `sleep_ms(3000);`: A Pico SDK function that pauses program execution for the specified milliseconds (3000 ms or 3 seconds), commonly used to allow time for the IDE’s serial monitor to connect before the program starts sending data.
+* `printf("Starting Galton Board...\n");`: Prints an initialization message to the serial monitor.
+```c
+gpio_init(BUTTON_A);
+gpio_init(BUTTON_B);
+gpio_set_dir(BUTTON_A, GPIO_IN);
+gpio_set_dir(BUTTON_B, GPIO_IN);
+gpio_pull_up(BUTTON_A);
+gpio_pull_up(BUTTON_B);
+```
+Initializes GPIO pins 5 and 6, connected to buttons A and B on the board, as inputs with pull-up resistors.
+* `init_display();`: Calls a function defined in `display.c` (prototyped in `display.h`) to initialize the SSD1306 display, explained later.
+
+**5. Ball Initialization:**
+
+```c
+    Ball balls[MAX_BALLS];
+    for (int i = 0; i < MAX_BALLS; i++) {
+        balls[i].active = false;
+    }
+```
+
+* `Ball balls[MAX_BALLS];`: Declares an array named `balls` capable of storing `MAX_BALLS` (10) structures of type `Ball` (defined in `galton.h` with attributes like x, y position, active state, and collision count). `MAX_BALLS` is a constant defined in `galton.h` specifying the number of balls simulated simultaneously.
+* `for (int i = 0; i < MAX_BALLS; i++) { ... }`: Starts a loop iterating over each element of the `balls` array.
+* `balls[i].active = false;`: Initializes each ball, setting `active = false`, ensuring no balls are active at the start of the simulation. This prepares the system to dynamically activate balls during the "ball rain."
+
+**6. Histogram and Ball Count Initialization:**
+
+```c
+for (int i = 0; i < CHANNELS; i++) {
+        histogram[i] = 0;
+    }
+    total_balls = 0;
+```
+
+* `for (int i = 0; i < CHANNELS; i++) {...}`: Starts a loop iterating from `i = 0` to `i < CHANNELS` (`CHANNELS` is 16, defined in `galton.h`) over the elements of the `histogram` array.
+* `histogram[i] = 0;`: Sets the value of `histogram[i]` to 0. The `histogram` array (declared in `galton.c`) stores the count of balls in each of the 16 bins. This command resets all counts, initializing the histogram for the simulation.
+
+* `total_balls = 0;`: Initializes the global variable `total_balls` (declared in `galton.c`) to 0. This variable tracks the total number of balls that have landed in the bins, used for calculating statistics like mean and standard deviation displayed on the serial monitor every 100 balls. It also appears at the top of the SSD1306 OLED display to indicate the total number of simulations.
+
+**7. Extra Definitions:**
+
+```c
+extern float left_prob;
+static uint32_t last_press_a = 0;
+static uint32_t last_press_b = 0;
+static bool last_state_a = true;
+static bool last_state_b = true;
+```
+
+* `extern float left_prob;`: Declares that the `left_prob` variable (defined in `galton.c`) is external, allowing access in `main.c`. `left_prob` stores the probability of a ball deflecting left (e.g., 50.0f for 50%, 70.0f for 70%), adjusted by buttons A and B.
+
+* `static uint32_t last_press_a = 0;`: Declares a static variable `last_press_a` of type `uint32_t`, initialized to 0. It stores the timestamp (in milliseconds) of the last press of button A (GPIO 5). The `static` keyword ensures the value persists between iterations of the main loop. Used for implementing debounce (minimum 200ms interval between presses).
+
+* `static uint32_t last_press_b = 0;`: Similar to `last_press_a`, but for button B (GPIO 6). Stores the timestamp of the last press of button B, also for debounce.
+
+* `static bool last_state_a = true;`: Declares a static variable `last_state_a` of type `bool`, initialized to `true`. Represents the last read state of button A (GPIO 5), where `true` indicates not pressed (due to the internal pull-up) and `false` indicates pressed. Used to detect the falling edge (transition from `true` to `false`) and avoid multiple readings during a press.
+
+* `static bool last_state_b = true;`: Similar to `last_state_a`, but for button B (GPIO 6). Stores the last state of button B, also for detecting the falling edge in the debounce mechanism.
+
+* `int tick = 0;`: Creates and initializes a counter (`tick`) that tracks the number of main loop iterations, incremented every 50ms. It controls the creation of new balls every 250ms, essential for the dynamics of the Galton Board simulation.
+
+**8. Main Simulation Loop:**
+
+```c
+    while (true) {
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        bool state_a = gpio_get(BUTTON_A);
+        bool state_b = gpio_get(BUTTON_B);
+```
+
+* `while (true) {`: Starts the main program loop for the Galton Board, which runs continuously (`while (true)`). Within it, the following are executed:
+
+* `uint32_t now = to_ms_since_boot(get_absolute_time());`: Obtains the current time in milliseconds since the program started, stored in `now`, for managing debounce and timing.
+
+* `bool state_a = gpio_get(BUTTON_A);`: Reads the state of button A (GPIO 5), returning `false` (pressed) or `true` (not pressed, due to the pull-up).
+
+* `bool state_b = gpio_get(BUTTON_B);`: Reads the state of button B (GPIO 6), similarly.
+These commands monitor the buttons to adjust probabilities and control the loop’s synchronization, which updates the simulation every 50ms.
+
+```c
+        if (!state_a && last_state_a && (now - last_press_a) > DEBOUNCE_MS) {
+            if (left_prob < 90.0f) {
+                left_prob += 10.0f;
+            }
+            last_press_a = now;
+        }
+
+        if (!state_b && last_state_b && (now - last_press_b) > DEBOUNCE_MS) {
+            if (left_prob > 10.0f) {
+                left_prob -= 10.0f;
+            }
+            last_press_b = now;
+        }
+
+        last_state_a = state_a;
+        last_state_b = state_b;
+```
+
+This section implements the logic for detecting button A and B presses with debounce, adjusting the ball deflection probabilities.
+
+* `if (!state_a && last_state_a && (now - last_press_a) > DEBOUNCE_MS) {`: Checks if button A is pressed (`!state_a`), was not pressed before (`last_state_a`), and more than 200ms have passed since the last press (`now - last_press_a > DEBOUNCE_MS`), ensuring debounce.
+
+* `if (left_prob < 90.0f) {`: Checks if the left deflection probability (`left_prob`) is less than 90%, preventing it from exceeding the maximum limit.
+
+* `left_prob += 10.0f;`: Increments `left_prob` by 10% (e.g., from 50% to 60%), increasing the chance of left deflection.
+
+* `last_press_a = now;`: Updates the timestamp of the last button A press with the current time (`now`), for the next debounce cycle.
+
+* `}`: Closes the button A conditional block.
+
+* `if (!state_b && last_state_b && (now - last_press_b) > DEBOUNCE_MS) {`: Checks if button B is pressed (`!state_b`), was not pressed before (`last_state_b`), and more than 200ms have passed since the last press, for debounce.
+
+* `if (left_prob > 10.0f) {`: Checks if `left_prob` is greater than 10%, preventing it from falling below the minimum limit.
+
+* `left_prob -= 10.0f;`: Decrements `left_prob` by 10% (e.g., from 50% to 40%), increasing the chance of right deflection.
+
+* `last_press_b = now;`: Updates the timestamp of the last button B press with the current time.
+
+* `}`: Closes the button B conditional block.
+
+* `last_state_a = state_a;`: Stores the current state of button A (`state_a`) in `last_state_a` for the next iteration, allowing detection of the next falling edge.
+
+* `last_state_b = state_b;`: Stores the current state of button B (`state_b`) in `last_state_b` for the next iteration.
+
+```c
+        if (tick % 5 == 0) {
+            for (int i = 0; i < MAX_BALLS; i++) {
+                if (!balls[i].active) {
+                    init_ball(&balls[i]);
+                    break;
+                }
+            }
+        }
+```
+
+This section controls the creation of new balls in the simulation, adding a new ball every 250ms if there is an inactive ball in the `balls` array (maximum of 10 active balls). This ensures the continuous "rain" of balls in the Galton Board.
+
+* `if (tick % 5 == 0) {`: Checks if the `tick` counter (incremented every 50ms) is divisible by 5, i.e., every 250ms (5 × 50ms), executing the block to add a new ball.
+
+* `for (int i = 0; i < MAX_BALLS; i++) {`: Starts a loop iterating over the `balls` array (size `MAX_BALLS = 10`), looking for an inactive ball.
+
+* `if (!balls[i].active) {`: Checks if the ball at index `i` is not active (`active = false`), indicating it can be used.
+
+* `init_ball(&balls[i]);`: Calls the `init_ball` function (defined in `galton.c`) to initialize the ball `balls[i]`, setting its initial position (x=64, y=0), activating it (`active = true`), and resetting collisions.
+
+* `break;`: Exits the `for` loop after activating one ball, preventing multiple balls from being initialized in the same cycle.
+
+* `}`: Closes the inactive ball check conditional.
+
+* `}`: Closes the `for` loop.
+
+* `}`: Closes the `tick` conditional block.
+
+```c
+        for (int i = 0; i < MAX_BALLS; i++) {
+            if (balls[i].active) {
+                update_ball(&balls[i]);
+                if (!balls[i].active) {
+                    register_ball_landing(&balls[i]);
+                    if (total_balls % 100 == 0 && total_balls > 0) {
+                        calculate_statistics();
+                    }
+                }
+            }
+        }
+```
+
+This section manages the updating of active balls in the simulation. It updates all active balls every main loop iteration (~50ms), moving them and processing collisions. When a ball reaches the bottom, it is registered in the histogram, and every 100 balls, statistics are calculated and displayed serially, updating the Galton Board simulation.
+
+* `for (int i = 0; i < MAX_BALLS; i++) {`: Starts a loop iterating over the `balls` array (size `MAX_BALLS = 10`), checking each ball.
+
+* `if (balls[i].active) {`: Checks if the ball at index `i` is active (`active = true`), indicating it is falling in the simulation.
+
+* `update_ball(&balls[i]);`: Calls `update_ball` (in `galton.c`) to update the ball, moving it vertically (increments `y`), applying horizontal deflections (±4 pixels) at collisions, and deactivating it (`active = false`) if it reaches the bottom (y ≥ 64).
+
+* `if (!balls[i].active) {`: Checks if the ball was deactivated after `update_ball` (i.e., it reached the bottom).
+
+* `register_ball_landing(&balls[i]);`: Calls `register_ball_landing` (in `galton.c`) to register the ball in the corresponding bin (based on `x`), incrementing `histogram[bin]` and `total_balls`.
+
+* `if (total_balls % 100 == 0 && total_balls > 0) {`: Checks if the total number of balls (`total_balls`) is divisible by 100 and greater than 0, indicating 100 balls have landed since the last statistics.
+
+* `calculate_statistics();`: Calls `calculate_statistics` (in `galton.c`) to calculate and display via serial the total balls, count per bin, mean, and standard deviation.
+
+* `}`: Closes the statistics conditional block.
+
+* `}`: Closes the deactivated ball conditional block.
+
+* `}`: Closes the active ball conditional block.
+
+* `}`: Closes the `for` loop.
+
+```c
+        for (int i = 0; i < CHANNELS; i++) {
+            if (histogram[i] < 0) histogram[i] = 0;
+        }
+        update_display(balls, MAX_BALLS, histogram);
+
+        tick++;
+        sleep_ms(50);
+    }
+
+    return 0;
+}
+```
+
+This section completes the main loop, ensuring histogram integrity, updating the display, and controlling timing.
+
+* `for (int i = 0; i < CHANNELS; i++) {`: Starts a loop iterating over the 16 bins of the `histogram` array (`CHANNELS = 16`, defined in `galton.h`).
+
+* `if (histogram[i] < 0) histogram[i] = 0;`: Checks if the value of `histogram[i]` is negative (an unlikely error, but possible during debugging) and, if so, corrects it to 0, ensuring valid histogram counts.
+
+* `}`: Closes the `for` loop.
+
+* `update_display(balls, MAX_BALLS, histogram);`: Calls `update_display` (in `display.c`) to update the OLED display, drawing active balls (`balls`), the histogram (`histogram`, scaled `histogram[i] / 2`), the ball counter (`total_balls`), and probabilities (e.g., "60%" left, "40%" right).
+
+* `tick++;`: Increments the `tick` counter, tracking the number of main loop iterations, used to time the creation of new balls (every 250ms, when `tick % 5 == 0`).
+
+* `sleep_ms(50);`: Pauses execution for 50 milliseconds, ensuring the main loop runs every ~50ms, controlling the simulation’s update rate.
+
+* `}`: Closes the `while (true)` loop, which runs indefinitely.
+
+* `return 0;`: Indicates successful termination of the `main` function (though never reached due to the `while (true)`).
+
+* `}`: Closes the `main` function.
+
+#### Simulator galton.c:
+
+**1. Includes:**
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "pico/stdlib.h"
+#include "pico/rand.h"
+#include "galton.h"
+```
+
+This section defines the libraries necessary for implementing the simulation logic, including randomness, statistical calculations, and hardware interaction.
+
+* `#include <stdio.h>`: Includes the standard input/output library, enabling functions like `printf` for displaying statistics on the serial output (e.g., in `calculate_statistics`).
+* `#include <stdlib.h>`: Includes the standard library, providing functions like `get_rand_32` (used indirectly via `pico/rand.h`) for random number generation.
+* `#include <math.h>`: Includes the math library, providing functions like `sqrtf` for standard deviation calculations in `calculate_statistics`.
+* `#include "pico/stdlib.h"`: Includes the Pico SDK standard library, providing functions like `sleep_ms` and GPIO access, used elsewhere in the project.
+* `#include "pico/rand.h"`: Includes the Pico SDK’s random number generation library, providing `get_rand_32` for the `random_direction` function, essential for simulating random deflections.
+* `#include "galton.h"`: Includes the `galton.h` header file, defining constants (e.g., `MAX_BALLS`, `CHANNELS`), the `Ball` structure, and function prototypes used in `galton.c` (e.g., `init_ball`, `update_ball`).
+
+**2. Definitions:**
+
+```c
+int histogram[CHANNELS] = {0};
+int total_balls = 0;
+float left_prob = 50.0f;
+```
+
+This section defines and initializes global variables for the simulation.
+
+* `int histogram[CHANNELS] = {0};`: Declares and initializes a global array `histogram` with size `CHANNELS` (16, defined in `galton.h`), filling all elements with 0. It stores the count of balls landing in each bin of the Galton Board.
+* `int total_balls = 0;`: Declares and initializes the global variable `total_balls` to 0. It tracks the total number of balls that have landed in the bins, used for statistics and display.
+* `float left_prob = 50.0f;`: Declares and initializes the global variable `left_prob` to 50.0f (50%), setting the initial probability of a ball deflecting left at each collision. It is dynamically adjusted by buttons A and B in `main.c`.
+
+**3. `random_direction()` Function:**
+
+```c
+bool random_direction() {
+    return (get_rand_32() % 100) < left_prob;
+}
+```
+
+This section defines the `random_direction` function, which randomly determines a ball’s deflection direction.
+
+* `bool random_direction() {`: Declares the `random_direction` function, returning a boolean (`true` for left deflection, `false` for right).
+* `return (get_rand_32() % 100) < left_prob;`: Generates a random number from 0 to 99 using `get_rand_32() % 100` (where `get_rand_32` is from `pico/rand.h`) and compares it with `left_prob` (e.g., 50.0f for 50%, 60.0f for 60%). Returns `true` if the number is less than `left_prob`, indicating left deflection (e.g., for 60%, `true` if `get_rand_32() % 100` < 60). Otherwise, returns `false` (right deflection).
+* `}`: Closes the function.
+
+**4. `test_randomness()` Function:**
+
+```c
+void test_randomness(int trials) {
+    int left = 0, right = 0;
+    for (int i = 0; i < trials; i++) {
+        if (random_direction() == 0) right++;
+        else left++;
+    }
+    printf("Left: %d (%.2f%%), Right: %d (%.2f%%)\n",
+            left, (float)left / trials * 100,
+            right, (float)right / trials * 100);
+}
+```
+
+This section defines the `test_randomness` function to test the distribution of random deflections.
+
+* `void test_randomness(int trials) {`: Declares the `test_randomness` function, taking a `trials` parameter (number of simulations) and returning no value, only printing results to the serial monitor.
+* `int left = 0, right = 0;`: Declares and initializes two local variables, `left` and `right`, to count left and right deflections, respectively.
+* `for (int i = 0; i < trials; i++) {`: Starts a loop executing `trials` iterations to test the `random_direction` function.
+* `if (random_direction() == 0) right++;`: Calls `random_direction`; if it returns `false` (0, right deflection), increments `right`.
+* `else left++;`: If `random_direction` returns `true` (left deflection), increments `left`.
+* `}`: Closes the `for` loop.
+* `printf("Left: %d (%.2f%%), Right: %d (%.2f%%)\n", ...);`: Displays via serial the number of left (`left`) and right (`right`) deflections, with their percentages calculated as `(float)left / trials * 100` and `(float)right / trials * 100`, formatted to two decimal places.
+* `}`: Closes the function.
+
+**5. `calculate_statistics()` Function:**
+
+```c
+void calculate_statistics() {
+    if (total_balls == 0) {
+        printf("No balls recorded.\n");
+        return;
+    }
+
+    float mean = 0.0f;
+    for (int i = 0; i < CHANNELS; i++) {
+        mean += (i + 1) * histogram[i];
+    }
+    mean /= total_balls;
+
+    float variance = 0.0f;
+    for (int i = 0; i < CHANNELS; i++) {
+        variance += histogram[i] * ((i + 1) - mean) * ((i + 1) - mean);
+    }
+    variance /= total_balls;
+    float std_dev = sqrtf(variance);
+
+    printf("Total Balls: %d\n", total_balls);
+    printf("Bins: ");
+    for (int i = 0; i < CHANNELS; i++) {
+        printf("[%d]: %d ", i + 1, histogram[i]);
+    }
+    printf("\nMean: %.2f\nStandard Deviation: %.2f\n", mean, std_dev);
+}
+```
+
+This section defines the `calculate_statistics` function, which calculates and displays simulation statistics on the serial monitor every 100 balls.
+
+* `void calculate_statistics() {`: Declares the `calculate_statistics` function, which returns no value and processes histogram data.
+* `if (total_balls == 0) {`: Checks if no balls have been recorded (`total_balls == 0`).
+* `printf("No balls recorded.\n");`: Displays a message via serial if no balls are present.
+* `return;`: Exits the function if `total_balls` is 0, avoiding invalid calculations.
+* `float mean = 0.0f;`: Initializes the `mean` variable (mean) to 0.0.
+* `for (int i = 0; i < CHANNELS; i++) {`: Iterates over the 16 bins (`CHANNELS = 16`).
+* `mean += (i + 1) * histogram[i];`: Accumulates the weighted sum of bins (bin `i+1` multiplied by the count `histogram[i]`) to calculate the mean.
+* `}`: Closes the loop.
+* `mean /= total_balls;`: Divides the sum by the total number of balls to obtain the mean.
+* `float variance = 0.0f;`: Initializes the `variance` variable (variance) to 0.0.
+* `for (int i = 0; i < CHANNELS; i++) {`: Iterates over the bins again.
+* `variance += histogram[i] * ((i + 1) - mean) * ((i + 1) - mean);`: Accumulates the sum of squared differences between each bin (`i+1`) and the mean, weighted by `histogram[i]`, to calculate variance.
+* `}`: Closes the loop.
+* `variance /= total_balls;`: Divides the sum by the total number of balls to obtain the variance.
+* `float std_dev = sqrtf(variance);`: Calculates the standard deviation as the square root of the variance, using `sqrtf` from `math.h`.
+* `printf("Total Balls: %d\n", total_balls);`: Displays the total number of balls via serial.
+* `printf("Bins: ");`: Starts displaying the bin counts.
+* `for (int i = 0; i < CHANNELS; i++) {`: Iterates over the bins to display counts.
+* `printf("[%d]: %d ", i + 1, histogram[i]);`: Displays the bin number (`i+1`) and its count (`histogram[i]`).
+* `}`: Closes the loop.
+* `printf("\nMean: %.2f\nStandard Deviation: %.2f\n", mean, std_dev);`: Displays the mean and standard deviation, formatted to two decimal places.
+
+**6. `init_ball()` Function:**
+
+```c
+void init_ball(Ball *ball) {
+    ball->x = SSD1306_WIDTH / 2.0f;
+    ball->y = 0.0f;
+    ball->active = true;
+    ball->collisions = 0;
+}
+```
+
+This section defines the `init_ball` function, which initializes a ball for the simulation.
+
+* `void init_ball(Ball *ball) {`: Declares the `init_ball` function, taking a pointer to a `Ball` structure (defined in `galton.h`) and returning no value.
+* `ball->x = SSD1306_WIDTH / 2.0f;`: Sets the ball’s horizontal coordinate `x` to the center of the display (`SSD1306_WIDTH = 128`, so `x = 64.0f`), the initial drop point.
+* `ball->y = 0.0f;`: Sets the vertical coordinate `y` to 0, positioning the ball at the top of the display.
+* `ball->active = true;`: Marks the ball as active (`active = true`), indicating it is in motion in the simulation.
+* `ball->collisions = 0;`: Initializes the collision counter to 0, tracking how many times the ball has deflected (maximum 15).
+* `}`: Closes the function.
+
+**7. `update_ball()` Function:**
+
+```c
+void update_ball(Ball *ball) {
+    if (!ball->active) return;
+
+    ball->y += 1.0f;
+    if (ball->collisions < 15 && ball->y >= (ball->collisions + 1) * (SSD1306_HEIGHT / 15.0f)) {
+        bool dir = random_direction();
+        if (dir) {
+            ball->x -= 4.0f;
+        } else {
+            ball->x += 4.0f;
+        }
+        ball->collisions++;
+    }
+
+    if (ball->x < 0) ball->x = 0;
+    if (ball->x >= SSD1306_WIDTH) ball->x = SSD1306_WIDTH - 1;
+    if (ball->y >= SSD1306_HEIGHT) {
+        ball->active = false;
+    }
+}
+```
+
+This section defines the `update_ball` function, which updates a ball’s state during the simulation.
+
+* `void update_ball(Ball *ball) {`: Declares the `update_ball` function, taking a pointer to a `Ball` structure and returning no value.
+* `if (!ball->active) return;`: Checks if the ball is inactive (`active = false`); if so, exits the function without changes.
+* `ball->y += 1.0f;`: Increments the vertical coordinate `y` by 1 pixel, moving the ball downward.
+* `if (ball->collisions < 15 && ball->y >= (ball->collisions + 1) * (SSD1306_HEIGHT / 15.0f)) {`: Checks if the ball can still collide (`collisions < 15`) and if it has reached the height of the next collision (calculated as `(collisions + 1) * (64 / 15) ≈ 4.27` pixels).
+* `bool dir = random_direction();`: Calls `random_direction` to randomly decide the deflection direction (`true` for left, `false` for right), based on `left_prob`.
+* `if (dir) {`: Checks if the deflection is left (`dir = true`).
+* `ball->x -= 4.0f;`: Moves the ball 4 pixels left (subtracts from `x`).
+* `} else {`: Otherwise (right deflection, `dir = false`).
+* `ball->x += 4.0f;`: Moves the ball 4 pixels right (adds to `x`).
+* `}`: Closes the direction conditional block.
+* `ball->collisions++;`: Increments the collision counter, recording the current collision.
+* `}`: Closes the collision conditional block.
+* `if (ball->x < 0) ball->x = 0;`: Ensures `x` is not negative, limiting the ball to the display’s left edge.
+* `if (ball->x >= SSD1306_WIDTH) ball->x = SSD1306_WIDTH - 1;`: Ensures `x` does not exceed the display width (`SSD1306_WIDTH = 128`), limiting to the right edge.
+* `if (ball->y >= SSD1306_HEIGHT) {`: Checks if the ball has reached or exceeded the bottom of the display (`SSD1306_HEIGHT = 64`).
+* `ball->active = false;`: Deactivates the ball (`active = false`), indicating its trajectory is complete.
+* `}`: Closes the height conditional block.
+* `}`: Closes the function.
+
+**8. `register_ball_landing()` Function:**
+
+```c
+void register_ball_landing(Ball *ball) {
+    int bin = (int)(ball->x / (SSD1306_WIDTH / CHANNELS));
+    if (bin >= 0 && bin < CHANNELS) {
+        histogram[bin]++;
+        total_balls++;
+    }
+}
+```
+
+This section defines the `register_ball_landing` function, which records a ball’s final position in the histogram.
+
+* `void register_ball_landing(Ball *ball) {`: Declares the `register_ball_landing` function, taking a pointer to a `Ball` structure and returning no value.
+* `int bin = (int)(ball->x / (SSD1306_WIDTH / CHANNELS));`: Calculates the bin index (0 to 15) where the ball landed, dividing its `x` position by the width of each bin (`SSD1306_WIDTH / CHANNELS = 128 / 16 = 8`) and converting to an integer.
+* `if (bin >= 0 && bin < CHANNELS) {`: Checks if the bin index is valid (between 0 and 15, where `CHANNELS = 16`), preventing out-of-bounds access to the `histogram` array.
+* `histogram[bin]++;`: Increments the count in the corresponding bin (`histogram[bin]`), recording the ball in the histogram.
+* `total_balls++;`: Increments the global `total_balls` variable, updating the total count of landed balls.
+* `}`: Closes the conditional block.
+* `}`: Closes the function.
+
+**9. `get_left_probability()` Function:**
+
+```c
+float get_left_probability() {
+    return left_prob;
+}
+```
+
+This section defines the `get_left_probability` function, which returns the left deflection probability.
+
+* `float get_left_probability() {`: Declares the `get_left_probability` function, returning a `float` and taking no parameters.
+* `return left_prob;`: Returns the value of the global `left_prob` variable (defined in `galton.c`), storing the probability of a ball deflecting left (e.g., 50.0f for 50%, 60.0f for 60%).
+* `}`: Closes the function.
+
+#### Display Manager display.c:
+
+**1. Includes:**
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include "pico/stdlib.h"
+#include "hardware/i2c.h"
+#include "ssd1306.h"
+#include "ssd1306_i2c.h"
+#include "display.h"
+```
+
+This section imports the libraries necessary for managing the SSD1306 OLED display.
+
+* `#include <stdio.h>`: Includes the standard input/output library, enabling functions like `snprintf` for formatting strings (e.g., "Balls: %d").
+* `#include <string.h>`: Includes the string manipulation library, providing `memset` for clearing the display buffer.
+* `#include "pico/stdlib.h"`: Includes the Pico SDK standard library, providing functions like `gpio_set_function` for configuring I2C pins.
+* `#include "hardware/i2c.h"`: Includes the Pico SDK library for I2C communication, used to send commands and data to the SSD1306 display.
+* `#include "ssd1306.h"`: Includes the SSD1306 library header, defining constants and functions for interacting with the display (e.g., `ssd1306_set_pixel`).
+* `#include "ssd1306_i2c.h"`: Includes the header specific to I2C communication with the SSD1306, providing functions like `ssd1306_draw_string`.
+* `#include "display.h"`: Includes the `display.h` header, defining prototypes for `display.c` functions (e.g., `init_display`, `update_display`) and related constants.
+
+**2. Definitions:**
+
+```c
+#define BUFFER_LENGTH (SSD1306_WIDTH * SSD1306_HEIGHT / 8)
+
+static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];
+```
+
+This section defines constants and variables for managing the SSD1306 OLED display buffer.
+
+* `#define BUFFER_LENGTH (SSD1306_WIDTH * SSD1306_HEIGHT / 8)`: Defines the constant `BUFFER_LENGTH` as the display buffer size, calculated as `SSD1306_WIDTH` (128) × `SSD1306_HEIGHT` (64) ÷ 8. Since the SSD1306 uses 1 bit per pixel and 8 bits per byte, the buffer is 1024 bytes (128 × 64 ÷ 8).
+* `static uint8_t display_buffer[SSD1306_WIDTH * SSD1306_HEIGHT / 8];`: Declares a static variable `display_buffer`, a `uint8_t` array with size `BUFFER_LENGTH` (1024 bytes). It stores the pixel states of the display (1 bit per pixel), used to draw balls, histogram, and text before sending to the SSD1306.
+
+**3. `clear_display_buffer()` Function:**
+
+```c
+void clear_display_buffer() {
+    memset(display_buffer, 0, BUFFER_LENGTH);
+}
+```
+
+**4. `ssd1306_update_display()` Function:**
+
+```c
+void ssd1306_update_display() {
+    uint8_t command_buffer[2];
+    
+    command_buffer[0] = 0x00;
+    command_buffer[1] = 0x21;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x00;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x7F;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    
+    command_buffer[1] = 0x22;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x00;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    command_buffer[1] = 0x07;
+    i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);
+    
+    uint8_t data_buffer[1025];
+    data_buffer[0] = 0x40;
+    memcpy(&data_buffer[1], display_buffer, BUFFER_LENGTH);
+    i2c_write_blocking(i2c1, 0x3C, data_buffer, BUFFER_LENGTH + 1, false);
+}
+```
+
+This section defines the `ssd1306_update_display` function, which updates the SSD1306 OLED display with the buffer’s contents.
+
+* `void ssd1306_update_display() {`: Declares the function that updates the display, with no return.
+* `uint8_t command_buffer[2];`: Declares a 2-byte array to store I2C commands.
+* `command_buffer[0] = 0x00;`: Sets the control byte to 0x00 (indicating commands).
+* `command_buffer[1] = 0x21;`: Sets the command 0x21 (sets column range).
+* `i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);`: Sends the command via I2C (address 0x3C) to start column configuration.
+* `command_buffer[1] = 0x00;`: Sets the starting column to 0.
+* `i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);`: Sends the starting column command.
+* `command_buffer[1] = 0x7F;`: Sets the ending column to 127 (128 columns).
+* `i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);`: Sends the ending column command.
+* `command_buffer[1] = 0x22;`: Sets the command 0x22 (sets page range).
+* `i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);`: Sends the command to start page configuration.
+* `command_buffer[1] = 0x00;`: Sets the starting page to 0.
+* `i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);`: Sends the starting page command.
+* `command_buffer[1] = 0x07;`: Sets the ending page to 7 (8 pages, 64 rows).
+* `i2c_write_blocking(i2c1, 0x3C, command_buffer, 2, false);`: Sends the ending page command.
+* `uint8_t data_buffer[1025];`: Declares a 1025-byte array for display data (1024 buffer bytes + 1 control byte).
+* `data_buffer[0] = 0x40;`: Sets the control byte to 0x40 (indicating data).
+* `memcpy(&data_buffer[1], display_buffer, BUFFER_LENGTH);`: Copies the `display_buffer` contents (1024 bytes) to `data_buffer`, starting at index 1.
+* `i2c_write_blocking(i2c1, 0x3C, data_buffer, BUFFER_LENGTH + 1, false);`: Sends the 1025 bytes (control + data) via I2C to the display, updating the screen with the `display_buffer` contents.
+* `}`: Closes the function.
+
+**5. `ssd1306_setup()` Function:**
+
+```c
+void ssd1306_setup() {
+    uint8_t init_commands[] = {
+        0x00, 0xAE, 0x00, 0xD5, 0x80, 0x00, 0xA8, 0x3F, 0x00, 0xD3, 0x00,
+        0x00, 0x40, 0x00, 0x8D, 0x14, 0x00, 0x20, 0x00, 0x00, 0xA1, 0x00,
+        0xC8, 0x00, 0xDA, 0x12, 0x00, 0x81, 0xCF, 0x00, 0xD9, 0xF1, 0x00,
+        0xDB, 0x40, 0x00, 0xA4, 0x00, 0xA6, 0x00, 0xAF
+    };
+    i2c_write_blocking(i2c1, 0x3C, init_commands, sizeof(init_commands), false);
+}
+```
+
+This section defines the `ssd1306_setup` function, which initializes the SSD1306 OLED display.
+
+* `void ssd1306_setup() {`: Declares the `ssd1306_setup` function, which returns no value and configures the display.
+* `uint8_t init_commands[] = { ... };`: Declares a byte array containing a sequence of initialization commands for the SSD1306, including:
+  - `0x00`: Control byte for commands.
+  - `0xAE`: Turns off the display.
+  - `0xD5, 0x80`: Configures the display clock.
+  - `0xA8, 0x3F`: Sets multiplexing (64 rows).
+  - `0xD3, 0x00`: Sets display offset.
+  - `0x40`: Sets the starting line.
+  - `0x8D, 0x14`: Enables charge pump.
+  - `0x20, 0x00`: Sets horizontal addressing mode.
+  - `0xA1`: Sets column segmentation.
+  - `0xC8`: Sets scan direction.
+  - `0xDA, 0x12`: Configures hardware pins.
+  - `0x81, 0xCF`: Adjusts contrast.
+  - `0xD9, 0xF1`: Sets pre-charge.
+  - `0xDB, 0x40`: Adjusts VCOM voltage.
+  - `0xA4`: Enables buffer display.
+  - `0xA6`: Sets normal mode (non-inverted).
+  - `0xAF`: Turns on the display.
+* `i2c_write_blocking(i2c1, 0x3C, init_commands, sizeof(init_commands), false);`: Sends the command sequence via I2C (interface `i2c1`, address 0x3C) to the SSD1306, configuring the display with the above settings.
+* `}`: Closes the function.
+
+**6. `init_display()` Function:**
+
+```c
+void init_display() {
+    i2c_init(i2c1, 400 * 1000);
+    gpio_set_function(14, GPIO_FUNC_I2C);
+    gpio_set_function(15, GPIO_FUNC_I2C);
+    gpio_pull_up(14);
+    gpio_pull_up(15);
+    ssd1306_setup();
+    clear_display_buffer();
+    ssd1306_update_display();
+    clear_display_buffer();
+    ssd1306_update_display();
+}
+```
+
+This section defines the `init_display` function, which initializes the SSD1306 OLED display and its I2C communication.
+
+* `void init_display() {`: Declares the `init_display` function, which returns no value and configures the display.
+* `i2c_init(i2c1, 400 * 1000);`: Initializes the I2C interface (`i2c1`) at 400 kHz (400 * 1000 Hz).
+* `gpio_set_function(14, GPIO_FUNC_I2C);`: Configures GPIO pin 14 as SDA (data) for I2C communication.
+* `gpio_set_function(15, GPIO_FUNC_I2C);`: Configures GPIO pin 15 as SCL (clock) for I2C communication.
+* `gpio_pull_up(14);`: Enables the internal pull-up resistor on pin 14 (SDA), required for I2C operation.
+* `gpio_pull_up(15);`: Enables the internal pull-up resistor on pin 15 (SCL), also for I2C.
+* `ssd1306_setup();`: Calls `ssd1306_setup` to send initialization commands to the SSD1306, configuring settings like resolution and contrast.
+* `clear_display_buffer();`: Calls `clear_display_buffer` to zero the `display_buffer`, clearing the display’s contents.
+* `ssd1306_update_display();`: Calls `ssd1306_update_display` to send the zeroed buffer to the display, ensuring a clean screen.
+* `clear_display_buffer();`: Zeros the buffer again, preparing for the next update.
+* `ssd1306_update_display();`: Sends the zeroed buffer to the display again, ensuring the screen is completely clear.
+* `}`: Closes the function.
+
+**7. `draw_histogram()` Function:**
+
+```c
+void draw_histogram(int *histogram) {
+    for (int i = 0; i < CHANNELS; i++) {
+        if (histogram[i] > 0) {
+            int height = histogram[i] / 2;
+            if (height > SSD1306_HEIGHT - 10) height = SSD1306_HEIGHT - 10;
+            for (int y = SSD1306_HEIGHT - height; y < SSD1306_HEIGHT; y++) {
+                for (int x = i * CHANNEL_WIDTH; x < (i + 1) * CHANNEL_WIDTH - 1; x++) {
+                    ssd1306_set_pixel(display_buffer, x, y, true);
+                }
+            }
+        }
+    }
+}
+```
+
+This section defines the `draw_histogram` function, which draws the histogram on the SSD1306 OLED display.
+
+* `void draw_histogram(int *histogram) {`: Declares the `draw_histogram` function, taking a pointer to the `histogram` array and returning no value.
+* `for (int i = 0; i < CHANNELS; i++) {`: Iterates over the 16 bins (`CHANNELS = 16`) of the histogram.
+* `if (histogram[i] > 0) {`: Checks if bin `i` has recorded balls (`histogram[i] > 0`).
+* `int height = histogram[i] / 2;`: Calculates the histogram height for bin `i`, dividing the ball count by 2 (scaled for display).
+* `if (height > SSD1306_HEIGHT - 10) height = SSD1306_HEIGHT - 10;`: Limits the maximum height to 54 pixels (`SSD1306_HEIGHT = 64` - 10), reserving space for text at the top.
+* `for (int y = SSD1306_HEIGHT - height; y < SSD1306_HEIGHT; y++) {`: Iterates over the display rows, from `y = 64 - height` to `y = 63`, to draw the histogram bar.
+* `for (int x = i * CHANNEL_WIDTH; x < (i + 1) * CHANNEL_WIDTH - 1; x++) {`: Iterates over the columns of bin `i`, from `x = i * 8` to `x = (i + 1) * 8 - 2` (`CHANNEL_WIDTH = 8`), drawing the bar’s width (7 pixels to avoid overlap).
+* `ssd1306_set_pixel(display_buffer, x, y, true);`: Sets the pixel at `(x, y)` to active (`true`) in the `display_buffer`, drawing part of the histogram bar.
+* `}`: Closes the column loop.
+* `}`: Closes the row loop.
+* `}`: Closes the bin conditional block.
+* `}`: Closes the function.
+
+**8. `draw_ball()` Function:**
+
+```c
+void draw_ball(Ball *ball) {
+    if (ball->active) {
+        ssd1306_set_pixel(display_buffer, (int)ball->x, (int)ball->y, true);
+    }
+}
+```
+
+This section defines the `draw_ball` function, which draws an active ball on the SSD1306 OLED display.
+
+* `void draw_ball(Ball *ball) {`: Declares the `draw_ball` function, taking a pointer to a `Ball` structure (defined in `galton.h`) and returning no value.
+* `if (ball->active) {`: Checks if the ball is active (`active = true`), indicating it is falling and should be drawn.
+* `ssd1306_set_pixel(display_buffer, (int)ball->x, (int)ball->y, true);`: Sets a pixel in the `display_buffer` to active (`true`) at the ball’s coordinates `(x, y)`, converting `ball->x` and `ball->y` (type `float`) to `int`. This draws the ball as a single pixel on the display.
+* `}`: Closes the conditional block.
+* `}`: Closes the function.
+
+**9. `draw_probabilities()` Function:**
+
+```c
+void draw_probabilities(float left_prob) {
+    char left_buffer[8];
+    char right_buffer[8];
+    snprintf(left_buffer, sizeof(left_buffer), "%.0f%%", left_prob);
+    snprintf(right_buffer, sizeof(right_buffer), "%.0f%%", 100.0f - left_prob);
+    ssd1306_draw_string(display_buffer, 0, 28, left_buffer);
+    ssd1306_draw_string(display_buffer, 104, 28, right_buffer);
+}
+```
+
+This section defines the `draw_probabilities` function, which displays deflection probabilities on the SSD1306 OLED display.
+
+* `void draw_probabilities(float left_prob) {`: Declares the `draw_probabilities` function, taking the left deflection probability (`left_prob`) and returning no value.
+* `char left_buffer[8];`: Declares an 8-character array to store the left probability string.
+* `char right_buffer[8];`: Declares an 8-character array for the right probability string.
+* `snprintf(left_buffer, sizeof(left_buffer), "%.0f%%", left_prob);`: Formats `left_prob` (e.g., 60.0f) as a string with no decimals and a percentage sign (e.g., "60%") and stores it in `left_buffer`.
+* `snprintf(right_buffer, sizeof(right_buffer), "%.0f%%", 100.0f - left_prob);`: Formats the right probability (`100.0f - left_prob`, e.g., 40.0f) as a string (e.g., "40%") and stores it in `right_buffer`.
+* `ssd1306_draw_string(display_buffer, 0, 28, left_buffer);`: Draws the `left_buffer` string (e.g., "60%") in the `display_buffer` at position (x=0, y=28), on the left side of the display.
+* `ssd1306_draw_string(display_buffer, 104, 28, right_buffer);`: Draws the `right_buffer` string (e.g., "40%") at position (x=104, y=28), on the right side, adjusted to fit the 128-pixel display.
+* `}`: Closes the function.
+
+**10. `update_display()` Function:**
+
+```c
+void update_display(Ball *balls, int ball_count, int *histogram) {
+    clear_display_buffer();
+    for (int i = 0; i < ball_count; i++) {
+        draw_ball(&balls[i]);
+    }
+    draw_histogram(histogram);
+    char buffer[16];
+    snprintf(buffer, sizeof(buffer), "Balls: %d", total_balls);
+    ssd1306_draw_string(display_buffer, 0, 0, buffer);
+    draw_probabilities(get_left_probability());
+    ssd1306_update_display();
+}
+```
+
+This section defines the `update_display` function, which updates the SSD1306 OLED display with all visual elements of the simulation.
+
+* `void update_display(Ball *balls, int ball_count, int *histogram) {`: Declares the `update_display` function, taking the array of balls (`balls`), the number of balls (`ball_count`), the histogram (`histogram`), and returning no value.
+* `clear_display_buffer();`: Calls `clear_display_buffer` to zero the `display_buffer`, clearing the previous display contents.
+* `for (int i = 0; i < ball_count; i++) {`: Iterates over the `ball_count` balls (maximum `MAX_BALLS = 10`).
+* `draw_ball(&balls[i]);`: Calls `draw_ball` to draw the ball `balls[i]` in the `display_buffer` as a pixel, if active.
+* `}`: Closes the loop.
+* `draw_histogram(histogram);`: Calls `draw_histogram` to draw the histogram in the `display_buffer`, with bars proportional to the counts in `histogram` (scaled `histogram[i] / 2`).
+* `char buffer[16];`: Declares a 16-character array to store the ball counter string.
+* `snprintf(buffer, sizeof(buffer), "Balls: %d", total_balls);`: Formats `total_balls` as a string (e.g., "Balls: 100") and stores it in `buffer`.
+* `ssd1306_draw_string(display_buffer, 0, 0, buffer);`: Draws the `buffer` string (e.g., "Balls: 100") in the `display_buffer` at position (x=0, y=0), at the top of the display.
+* `draw_probabilities(get_left_probability());`: Calls `draw_probabilities` with the current probability (`get_left_probability`), drawing the percentages (e.g., "60%" left, "40%" right) in the `display_buffer`.
+* `ssd1306_update_display();`: Calls `ssd1306_update_display` to send the `display_buffer` to the SSD1306 via I2C, updating the display with all elements.
+* `}`: Closes the function.
