@@ -43,16 +43,16 @@ A simulação digital desenvolvida neste projeto recria o comportamento de um Ta
 
 Veja a saída do monitor serial após a queda de 200 bolinhas no tabuleiro:
 
----- Opened the serial port COM4 ----
-Iniciando Galton Board...
-Total de Bolas: 100
-Bins: [1]: 0 [2]: 0 [3]: 0 [4]: 2 [5]: 4 [6]: 11 [7]: 8 [8]: 22 [9]: 25 [10]: 17 [11]: 5 [12]: 4 [13]: 2 [14]: 0 [15]: 0 [16]: 0 
-Média: 8.50
-Desvio Padrão: 1.86
-Total de Bolas: 200
-Bins: [1]: 0 [2]: 0 [3]: 0 [4]: 2 [5]: 6 [6]: 23 [7]: 25 [8]: 41 [9]: 46 [10]: 34 [11]: 13 [12]: 6 [13]: 4 [14]: 0 [15]: 0 [16]: 0 
-Média: 8.50
-Desvio Padrão: 1.80
+---- Opened the serial port COM4 ----  
+Iniciando Galton Board...  
+Total de Bolas: 100  
+Bins: [1]: 0 [2]: 0 [3]: 0 [4]: 2 [5]: 4 [6]: 11 [7]: 8 [8]: 22 [9]: 25 [10]: 17 [11]: 5 [12]: 4 [13]: 2 [14]: 0 [15]: 0 [16]: 0   
+Média: 8.50  
+Desvio Padrão: 1.86  
+Total de Bolas: 200  
+Bins: [1]: 0 [2]: 0 [3]: 0 [4]: 2 [5]: 6 [6]: 23 [7]: 25 [8]: 41 [9]: 46 [10]: 34 [11]: 13 [12]: 6 [13]: 4 [14]: 0 [15]: 0 [16]: 0   
+Média: 8.50  
+Desvio Padrão: 1.80  
 
 
 ## 4. Análise do Código
