@@ -137,5 +137,3 @@ finally:
     if 'wlan' in locals() and wlan.active():
         wlan.disconnect()
         wlan.active(False)
-
-# end
