@@ -5,7 +5,7 @@
 Este projeto implementa uma funcionalidade **OTA (Over-The-Air)** na **Raspberry Pi Pico W**, permitindo que a placa receba e execute códigos Python enviados via Wi-Fi. O sistema utiliza o módulo Wi-Fi integrado (CYW43439) para conectar-se a uma rede Wi-Fi, iniciar um servidor TCP, e receber arquivos de código de um cliente remoto. O projeto inclui indicadores visuais com LEDs para sinalizar o status da conexão Wi-Fi e a execução do código recebido.
 
 ### O que o projeto faz?
-- **Conexão Wi-Fi**: A Pico W se conecta à rede Wi-Fi especificada (`VIVOFIBRA-8991_EXT`).
+- **Conexão Wi-Fi**: A Pico W se conecta à rede Wi-Fi especificada (`Nome-da-rede`).
 - **Sinalização de conexão**: Um LED vermelho (GPIO 13) pisca longamente (2 segundos) ao estabelecer a conexão Wi-Fi e pisca brevemente (0,5s ON, 0,5s OFF) a cada 10 segundos para confirmar que o Wi-Fi está ativo.
 - **Servidor TCP**: Inicia um servidor na porta 80 para receber arquivos Python de um cliente remoto.
 - **Execução OTA**: Salva o código recebido como `received.py` no sistema de arquivos da Pico W e o executa usando `exec()`.
@@ -33,7 +33,7 @@ Este projeto implementa uma funcionalidade **OTA (Over-The-Air)** na **Raspberry
    - A Pico W é inicializada com o firmware MicroPython.
    - O script `ota_pico_w.py` é carregado e executado.
 2. **Conexão Wi-Fi**:
-   - Conecta à rede `VIVOFIBRA-8991_EXT` (senha: `cajuca1801`).
+   - Conecta à rede Wifi.
    - Pisca o LED vermelho por 2 segundos ao conectar.
    - Verifica o status do Wi-Fi a cada 10 segundos, piscando o LED vermelho brevemente se ativo.
 3. **Servidor TCP**:
@@ -59,7 +59,7 @@ Siga estas instruções detalhadas para configurar e executar o projeto. A sequ�
   - VS Code com extensão MicroPython (ex.: Pico-W-Go) ou Thonny.
   - Python instalado no computador (para executar `send_code.py`).
 - **Rede Wi-Fi**:
-  - Acesso à rede `VIVOFIBRA-8991_EXT` (senha: `cajuca1801`).
+  - Acesso à rede Wifi.
 
 ### Instruções de configuração e execução
 
@@ -206,7 +206,7 @@ Siga estas instruções detalhadas para configurar e executar o projeto. A sequ�
      - Você verá:
        ```
        Iniciando OTA...
-       Conectando à rede Wi-Fi: VIVOFIBRA-8991_EXT
+       Conectando à rede Wi-Fi: Nome-da-rede
        .......
        Conectado! IP: 192.168.15.101
        LED vermelho ON (piscada longa)
@@ -297,7 +297,7 @@ Siga estas instruções detalhadas para configurar e executar o projeto. A sequ�
 
 ### Depuração e solução de problemas
 - **Wi-Fi não conecta**:
-  - Verifique as credenciais (`VIVOFIBRA-8991_EXT`, `cajuca1801`).
+  - Verifique as credenciais da rede Wifi.
   - Confirme a intensidade do sinal Wi-Fi.
   - Reinstale o firmware MicroPython.
 - **LED vermelho não pisca**:
