@@ -5,8 +5,8 @@ import uio
 from machine import Pin
 
 # Configurações Wi-Fi
-SSID = "VIVOFIBRA-8991_EXT"
-PASSWORD = "cajuca1801"
+SSID = "Sua-rede-wifi"
+PASSWORD = "sua-senha-wifi"
 
 # Configura LED vermelho no GPIO 13
 led_red = Pin(13, Pin.OUT)
