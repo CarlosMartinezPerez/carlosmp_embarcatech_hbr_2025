@@ -6,7 +6,7 @@ from machine import Pin
 
 # Configurações Wi-Fi
 SSID = "Sua-rede-wifi"
-PASSWORD = "sua-senha-wifi"
+PASSWORD = "Sua-senha-wifi"
 
 # Configura LED vermelho no GPIO 13
 led_red = Pin(13, Pin.OUT)
