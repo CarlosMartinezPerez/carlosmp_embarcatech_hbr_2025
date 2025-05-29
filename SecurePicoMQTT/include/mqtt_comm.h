@@ -1,27 +1,47 @@
-#ifndef MQTT_COMM_H
-#define MQTT_COMM_H
+#ifndef MQTT_COMMUNIC_H
+#define MQTT_COMMUNIC_H
 
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include "lwip/apps/mqtt.h"
+#include "lwip/ip_addr.h"
 
-/**
- * Função: mqtt_setup
- * Objetivo: Configurar e iniciar a conexão com o broker MQTT.
- * Parâmetros:
- *   - client_id: Identificador único do cliente
- *   - broker_ip: Endereço IP do broker (ex.: "192.168.1.1")
- *   - user: Nome de usuário para autenticação (pode ser NULL)
- *   - pass: Senha para autenticação (pode ser NULL)
- */
-void mqtt_setup(const char *client_id, const char *broker_ip, const char *user, const char *pass);
+typedef enum {
+    MQTT_OK,
+    MQTT_ERR_INVALID_IP,
+    MQTT_ERR_CLIENT_INIT,
+    MQTT_ERR_CONNECT_FAIL
+} mqtt_setup_result_t;
 
-/**
- * Função: mqtt_comm_publish
- * Objetivo: Publicar dados em um tópico MQTT.
- * Parâmetros:
- *   - topic: Nome do tópico (ex.: "sensor/temperatura")
- *   - data: Payload da mensagem (bytes)
- *   - len: Tamanho do payload
- */
+typedef enum {
+    MODO_PUBLISHER,
+    MODO_SUBSCRIBER,
+    MODO_NONE
+} modo_t;
+
+
+
+// Inicializa o cliente MQTT (internamente usado no setup)
+mqtt_client_t *mqtt_init_client(void);
+
+// Realiza configuração e tentativa de conexão com o broker
+mqtt_setup_result_t mqtt_setup(const char *client_id, const char *broker_ip, const char *user, const char *pass);
+
+
+// Publica uma mensagem em um tópico
 void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len);
 
-#endif // MQTT_COMM_H
+// Inscreve o cliente MQTT em um tópico específico
+void mqtt_subscribe_to_topic(const char *topic);
+
+// Registra uma função callback para lidar com dados recebidos
+void mqtt_register_callback(void (*cb)(const char*, const uint8_t*, size_t));
+
+// Verifica se o cliente está conectado ao broker
+bool is_mqtt_connected(void);
+
+// Libera o cliente e desconecta do broker
+void mqtt_comm_disconnect(void);
+
+#endif
