@@ -17,7 +17,7 @@
 #define WIFI_PASS "PASSWORD_WIFI"
 #define MQTT_BROKER_IP "000.000.00.000"
 #define MQTT_USER "LOGIN_MQTT"
-#define MQTT_PASS "SENHA_MQTT"
+#define MQTT_PASS "PASSWORD_MQTT"
 #define XOR_KEY 42
 
 #define CLIENT_ID "pico_pub_sala1"
