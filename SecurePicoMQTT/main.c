@@ -13,11 +13,11 @@
 #include "include/mqtt_subscriber.h"
 #include <string.h>
 
-#define WIFI_SSID "VIVOFIBRA-8991_EXT"
-#define WIFI_PASS "cajuca1801"
-#define MQTT_BROKER_IP "192.168.15.104"
-#define MQTT_USER "CarlosMP"
-#define MQTT_PASS "cajuca1801"
+#define WIFI_SSID "LOGIN_WIFI"
+#define WIFI_PASS "PASSWORD_WIFI"
+#define MQTT_BROKER_IP "000.000.00.000"
+#define MQTT_USER "LOGIN_MQTT"
+#define MQTT_PASS "SENHA_MQTT"
 #define XOR_KEY 42
 
 #define CLIENT_ID "pico_pub_sala1"
