@@ -152,7 +152,7 @@ static void hexstr_to_bytes(const char* hexstr, uint8_t* bytes, size_t bytes_len
 }
 
 // Trata as mensagens recebidas: descriptografa, extrai dados (temperatura e timestamp), verifica se não
-// é mensagem repetida e chama rotina para exibe os dados no display OLED, se mensagem for válida
+// é mensagem repetida e chama rotina para exibir os dados no display OLED, se mensagem for válida
 void on_message_cb(const char* topic, const uint8_t* payload, size_t len) {
     if (len % 2 != 0) {
         printf("Payload com tamanho ímpar, inválido para hex.\n");
