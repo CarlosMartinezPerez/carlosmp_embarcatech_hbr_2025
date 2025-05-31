@@ -35,11 +35,15 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 add_executable(SecurePicoMQTT 
         main.c 
-        wifi_conn.c 
-        mqtt_comm.c 
-        xor_cipher.c 
-        xor_decipher.c
-        ../oled/ssd1306_i2c.c)
+        src/display_oled.c
+        src/wifi_conn.c 
+        src/mqtt_comm.c 
+        src/xor_cipher.c
+        src/tratar_gpio.c
+        src/mqtt_publisher.c
+        src/mqtt_subscriber.c
+        oled/ssd1306_i2c.c
+)
 
 pico_set_program_name(SecurePicoMQTT "SecurePicoMQTT")
 pico_set_program_version(SecurePicoMQTT "0.1")

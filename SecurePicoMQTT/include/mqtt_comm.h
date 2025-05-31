@@ -7,6 +7,10 @@
 #include "lwip/apps/mqtt.h"
 #include "lwip/ip_addr.h"
 
+#ifndef XOR_KEY
+#define XOR_KEY 42
+#endif
+
 typedef enum {
     MQTT_OK,
     MQTT_ERR_INVALID_IP,
@@ -20,7 +24,7 @@ typedef enum {
     MODO_NONE
 } modo_t;
 
-
+extern modo_t modo_atual;
 
 // Inicializa o cliente MQTT (internamente usado no setup)
 mqtt_client_t *mqtt_init_client(void);
@@ -43,5 +47,9 @@ bool is_mqtt_connected(void);
 
 // Libera o cliente e desconecta do broker
 void mqtt_comm_disconnect(void);
+
+static void hexstr_to_bytes(const char* hexstr, uint8_t* bytes, size_t bytes_len);
+
+void on_message_cb(const char* topic, const uint8_t* payload, size_t len);
 
 #endif
