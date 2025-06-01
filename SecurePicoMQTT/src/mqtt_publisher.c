@@ -67,9 +67,9 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
         if (!gpio_get(BOTAO_B)) {  // Botão B: enviar mensagem nova
             sleep_ms(300);
             float temp_simulada = 25.0f + (rand() % 50) / 10.0f;
-            int64_t timestamp = to_ms_since_boot(get_absolute_time());
+            long long timestamp = to_ms_since_boot(get_absolute_time());
             char mensagem[64];
-            snprintf(mensagem, sizeof(mensagem), "T=%.1f %" PRId64, temp_simulada, timestamp);
+            snprintf(mensagem, sizeof(mensagem), "T=%.1f %lld", temp_simulada, timestamp);
             printf("Enviando nova mensagem: %s\n", mensagem);
 
             char mensagem_cript[64];

@@ -176,11 +176,11 @@ void on_message_cb(const char* topic, const uint8_t* payload, size_t len) {
 
     if (nova_timestamp > ultima_timestamp_recebida) {
         ultima_timestamp_recebida = nova_timestamp;
-        printf("Recebido: T=%.2f, timestamp=%" PRId64 "\n", valor, nova_timestamp);
+        printf("Recebido: T=%.2f, timestamp=%lld\n", valor, nova_timestamp);
 
         char buf1[32], buf2[32];
         snprintf(buf1, sizeof(buf1), "T=%.2f", valor);
-        snprintf(buf2, sizeof(buf2), "ts=%" PRId64, nova_timestamp);
+        snprintf(buf2, sizeof(buf2), "ts=%lld", nova_timestamp);
         display_oled_exibir_mensagem(buf1, buf2, topic, modo_atual);
     } else {
         printf("Replay detectado: %s\n", mensagem);
