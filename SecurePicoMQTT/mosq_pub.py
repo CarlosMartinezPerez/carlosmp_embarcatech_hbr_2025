@@ -47,7 +47,7 @@ for i in range(5):
     # Monta o comando para publicar a mensagem no broker MQTT usando mosquitto_pub
     comando = [
         "mosquitto_pub",  # Comando para publicar mensagens MQTT
-        "-h", "192.168.15.104",  # Endereço IP do broker MQTT
+        "-h", "192.168.15.101",  # Endereço IP do broker MQTT
         "-t", topicos[i],  # Tópico MQTT para a mensagem
         "-m", mensagem_hex,  # Mensagem criptografada em formato hexadecimal
         "-u", "CarlosMP",  # Usuário para autenticação no broker

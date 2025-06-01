@@ -63,3 +63,5 @@ void iniciar_subscriber(const char *ssid, const char *senha, const char *broker_
         sleep_ms(2000);
     }
 }
+
+

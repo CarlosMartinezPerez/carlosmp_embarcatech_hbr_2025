@@ -19,7 +19,7 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
     connect_to_wifi(ssid, senha);
 
     printf("Iniciando setup MQTT...\n");
-    mqtt_setup_result_t result = mqtt_setup(client_id, broker_ip, usuario, senha);
+    mqtt_setup_result_t result = mqtt_setup(client_id, broker_ip, usuario, senha_mqtt);
 
     if (result != MQTT_OK) {
         switch (result) {
@@ -38,6 +38,7 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
         }
         sleep_ms(3000);
         display_oled_inicializar();
+        return;
     }
 
     printf("Aguardando conexão com o broker MQTT...\n");
@@ -53,6 +54,7 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
         display_oled_exibir_mensagem("MQTT ERRO", "Timeout", "", MODO_NONE);
         sleep_ms(2000);
         display_oled_inicializar();
+        return;
     }
 
     printf("Conectado ao broker MQTT como PUBLISHER.\n");
@@ -112,3 +114,4 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
         }
     }
 }
+    

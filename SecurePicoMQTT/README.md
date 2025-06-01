@@ -814,7 +814,7 @@ Com mosquitto-pub e mosquitto-sub:
 Comandos:
 mosquitto_pub -h 127.0.0.1 -t escola/sala1/temperatura -u CarlosMP -P cajuca1801 -f msg_cifrada.bin
 
-mosquitto_sub -h 127.0.0.1 -t escola/sala1/temperatura -u CarlosMP -P cajuca1801 --verbose
+mosquitto_sub -h 192.168.15.101 -t escola/sala1/temperatura -u CarlosMP -P cajuca1801 --verbose
 
 Script python para decriptografar:
 msg = bytes([0x18, 0x1C, 0x04, 0x1F])
