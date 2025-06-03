@@ -1,4 +1,4 @@
-# SecurePicoMQTT - Segurança em IoT na BitDogLab com MQTT
+# Projeto SecurePicoMQTT - Segurança em IoT na BitDogLab com MQTT
 
 ## Visão Geral
 
@@ -89,7 +89,7 @@ SecurePicoMQTT/
 
 - **Objetivo**: Conectar a Pico W a uma rede Wi-Fi usando autenticação WPA2.
 - **Implementação**:
-  - Arquivos: `wifi_conn.c`, `wifi_conn.h`, `SecurePicoMQTT.c`, `CMakeLists.txt`
+  - Arquivos: `main.c`, `wifi_conn.c`, `wifi_conn.h`.
   - Código bloquenate (só libera após conectado) que configura o chip CYW43 para modo estação (STA) e tenta conexão com timeout de 30 segundos.
 
 #### Código
@@ -199,8 +199,8 @@ int main() {
     sleep_ms(5000);
 
     // Credenciais da rede Wi-Fi (substitua pelos valores reais)
-    const char *ssid = "VIVOFIBRA-8991_EXT";
-    const char *password = "cajuca1801";
+    const char *ssid = "minha-rede-wifi";
+    const char *password = "minha-senha-rede-wifi";
 
     // Conectar ao Wi-Fi
     connect_to_wifi(ssid, password);
@@ -211,8 +211,8 @@ int main() {
     // Configurações do broker MQTT
     const char *client_id = "pico_client";
     const char *broker_ip = "127.0.0.1"; // Substitua pelo IP do broker (localhost para testes locais)
-    const char *user = "CarlosMP";      // Substitua pelo usuário configurado no Mosquitto
-    const char *pass = "cajuca1801";      // Substitua pela senha configurada no Mosquitto
+    const char *user = "aluno"; // Substitua pelo usuário configurado no Mosquitto
+    const char *pass = "senha123"; // Substitua pela senha configurada no Mosquitto
 
     // Configura e conecta ao broker MQTT
     mqtt_setup(client_id, broker_ip, user, pass);
@@ -402,25 +402,59 @@ void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len);
   Received PUBLISH from pico_client on topic test/topic
   ```
 
+---
+
 ### Etapa 3: Publicação em Texto Claro
 
-- **Objetivo**: Publicar mensagem `"26.5"` no tópico `escola/sala1/temperatura`.
+- **Objetivo**: Publicação Sem Segurança: Validada pela visualização da mensagem em texto claro `"26.5"` no tópico `escola/sala1/temperatura`no terminal do mosquitto_sub e, criticamente, no payload do pacote MQTT no Wireshark, confirmando a ausência de ofuscação.
 - **Implementação**:
-  - Substituição no `SecurePicoMQTT.c`:
+  - Substituição no `main.c`:
     ```c
     const char *message = "26.5";
     const char *topic = "escola/sala1/temperatura";
     ```
-- **Resultado**:
-  - Mensagem capturada no Wireshark em texto claro (`32362e35` em ASCII hexadecimal, decodificado como `"26.5"`).
-  - Log do Mosquitto:
-    ```
-    Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
-    ```
+#### Resultado
+
+- Mensagem capturada no Wireshark em texto claro (`32362e35` em ASCII hexadecimal, decodificado como `"26.5"`).
+- Log do Mosquitto:
+  ```text
+  C:\Program Files\mosquitto>mosquitto -c mosquitto.conf -v
+  1748047143: mosquitto version 2.0.21 starting
+  1748047143: Config loaded from mosquitto.conf.
+  1748047143: Opening ipv6 listen socket on port 1883.
+  1748047143: Opening ipv4 listen socket on port 1883.
+  1748047143: mosquitto version 2.0.21 running
+  1748047446: New connection from 192.168.15.102:61070 on port 1883.
+  1748047446: New client connected from 192.168.15.102:61070 as pico_client (p2, c1, k0, u'aluno').
+  1748047446: No will message specified.
+  1748047446: Sending CONNACK to pico_client (0, 0)
+  1748047447: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+  1748047452: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))```
+  ```
+
+- Captura filtrada no Wireshark:  
+
+![Tela do Wireshark](Images/Wireshark_Etapa3.png)  
+*Figura 1 - Tela do Wireshark.*
+
+- A imagem mostra a publicação da mensagem `"26.5"` no tópico `escola/sala1/temperatura` através do protocolo MQTT (porta 1883), conforme capturado pelo Wireshark.
+  - A mensagem foi enviada em texto claro (sem criptografia).
+  - É possível visualizar no campo **Message** o conteúdo `32362e35`, que corresponde a `"26.5"` em ASCII hexadecimal.
+  - Essa etapa valida a comunicação MQTT básica da Pico W com o broker Mosquitto, com conteúdo visível no tráfego de rede.
+  - Decodificação hexadecimal da mensagem `32362e35`:
+
+| Hex  | ASCII |
+|------|-------|
+| 32   | 2     |
+| 36   | 6     |
+| 2e   | .     |
+| 35   | 5     |
+
+---
 
 ### Etapa 4: Autenticação no Mosquitto
 
-- **Objetivo**: Configurar autenticação no broker e testar com cliente.
+- **Objetivo**: Autenticação Básica, Verificada pela rejeição de conexões de mosquitto_sub sem credenciais e pela aceitação de conexões com usuário e senha corretos, conforme logs do Mosquitto broker. A placa BitDogLab só consegue se conectar ao broker com as credenciais configuradas.
 - **Implementação**:
   - Configuração do `mosquitto.conf`:
     ```conf
@@ -429,12 +463,30 @@ void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len);
     password_file C:\caminho\para\passwd
     ```
   - Criação de senha:
+    ```text
+    mosquitto_passwd -c C:\caminho\para\passwd aluno
+    (e posterior digitação de senha123 duas vezes).
     ```
-    mosquitto_passwd -c C:\caminho\para\passwd CarlosMP
+  - Testes com `mosquitto_pub` e `mosquitto_sub` confirmaram funcionamento. Comandos emitidos em terminais CMD diferentes:
+    ```text
+    mosquitto_pub -h 192.168.15.101 -p 1883 -t escola/sala1/temperatura -u aluno -P senha123 -m "26.5"
+
+    mosquitto_sub -h 192.168.15.101 -p 1883 -t escola/sala1/temperatura -u aluno -P senha123 --verbose
     ```
-  - Testes com `mosquitto_pub` e `mosquitto_sub` confirmaram funcionamento.
-- **Resultado**:
+
+📤 Publicação das mensagens via terminal:  
+![Publicação com mosquitto-pub](Images/mosquitto_pubetapa4.png)  
+*Figura 2 - Publicação com mosquitto-pub.*
+
+Assinatura e recepção das mensagens com `mosquitto_sub`:  
+![Recepção com mosquitto-sub](Images/mosquitto_subetapa4.png)  
+*Figura 3 - Recepção com mosquitto-sub.*
+
+#### Resultado
+
   - Publicações manuais de `"37.3"`, `"38.4"`, `"40.2"` no tópico `escola/sala1/temperatura` foram recebidas corretamente.
+
+---
 
 ### Etapa 5: Criptografia com XOR
 

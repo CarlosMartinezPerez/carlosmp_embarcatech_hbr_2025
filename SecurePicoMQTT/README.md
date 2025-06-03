@@ -774,8 +774,6 @@ As imagens abaixo mostram testes locais realizados com o broker Mosquitto, usand
 
 
 ![Recepção com mosquitto-sub](Images/mosquitto_subetapa4.png)  
-
-
 *Figura 3 - Recepção com mosquitto-sub.*
 
 > Esses testes comprovam que o broker está ativo, autenticado, e recebendo corretamente as publicações da Pico W e do terminal local.
