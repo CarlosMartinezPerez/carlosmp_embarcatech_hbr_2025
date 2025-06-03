@@ -734,15 +734,6 @@ A possibilidade de ativar a retenção de mensagens foi uma maneira de testar a 
 Além disso, para desenvolver e testar o modo subscriber foi criado o script python `mosq_pub.py`, executado via terminal, que enite 5 mensagens no formato do projeto, sendo as duas últimas repetidas.  
 
 
-## 📚 Referências
-
-- [Raspberry Pi Pico SDK Networking](https://www.raspberrypi.com/documentation/pico-sdk/networking.html)
-- [Mosquitto Documentation](https://mosquitto.org/)
-- [lwIP Documentation](https://www.nongnu.org/lwip/)
-- [BitDogLab GitHub](https://github.com/BitDogLab/BitDogLab-C)
-
----
-
 ## Considerações Finais
 
 ### Quais dessas técnica são escaláveis?
@@ -827,3 +818,10 @@ Em resumo, a base de conectividade e o protocolo MQTT são altamente escaláveis
 - Wireshark: Uma ferramenta de software de análise de protocolo de rede que permite capturar e interativamente navegar pelo tráfego que passa por uma interface de rede.
 - WPA2-AES-PSK: Um método de segurança Wi-Fi que usa WPA2 (Wi-Fi Protected Access 2) com criptografia AES (Advanced Encryption Standard) e uma chave pré-compartilhada (PSK).
 - XOR: Uma operação lógica bit a bit (OU exclusivo) usada neste projeto para criptografia leve.
+
+### Referências
+
+- [Raspberry Pi Pico SDK Networking](https://www.raspberrypi.com/documentation/pico-sdk/networking.html)
+- [Mosquitto Documentation](https://mosquitto.org/)
+- [lwIP Documentation](https://www.nongnu.org/lwip/)
+- [BitDogLab GitHub](https://github.com/BitDogLab/BitDogLab-C)
