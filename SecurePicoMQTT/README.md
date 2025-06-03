@@ -717,7 +717,7 @@ C:\Program Files\mosquitto>mosquitto -c mosquitto.conf -v
 
 
 Captura filtrada no Wireshark:
-![Tela do Wireshark](Images/Wireshark - Etapa 3.png)
+![Tela do Wireshark](Images/Wireshark_Etapa 3.png)
 
 ## 📷 Etapa 3: Publicação MQTT em texto claro
 
@@ -726,7 +726,7 @@ A imagem abaixo mostra a publicação da mensagem `"26.5"` no tópico `escola/sa
 - A mensagem foi enviada em texto claro (sem criptografia).
 - É possível visualizar no campo **Message** o conteúdo `32362e35`, que corresponde a `"26.5"` em ASCII hexadecimal.
 
-![Captura da Etapa 3 no Wireshark](Images/Wireshark - Etapa 3.png)
+![Captura da Etapa 3 no Wireshark](Images/Wireshark_Etapa 3.png)
 
 > Essa etapa valida a comunicação MQTT básica da Pico W com o broker Mosquitto, com conteúdo visível no tráfego de rede.
 
@@ -766,11 +766,11 @@ As imagens abaixo mostram testes locais realizados com o broker Mosquitto, usand
 📤 Publicação das mensagens via terminal:
 
 
-![Publicação com mosquitto-pub](Images/mosquitto-pub - Etapa 4.png)
+![Publicação com mosquitto-pub](Images/mosquitto-pub_Etapa 4.png)
 
 📥 Assinatura e recepção das mensagens com `mosquitto_sub`:
 
-![Recepção com mosquitto-sub](Images/mosquitto-sub - Etapa 4.png)
+![Recepção com mosquitto-sub](Images/mosquitto-sub_Etapa 4.png)
 
 > Esses testes comprovam que o broker está ativo, autenticado, e recebendo corretamente as publicações da Pico W e do terminal local.
 
@@ -798,7 +798,7 @@ C:\Program Files\mosquitto>mosquitto -c mosquitto.conf -v
 1748126987: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
 
 Wireshark:
-![Tela do Wireshark](Images/Wireshark - Etapa 5.png)
+![Tela do Wireshark](Images/Wireshark_Etapa 5.png)
 
 Decriptografia da mensagem capturada 181C041F:
 Aplique XOR com 0x2A (42 decimal):
@@ -821,9 +821,9 @@ msg = bytes([0x18, 0x1C, 0x04, 0x1F])
 decifrada = bytes([b ^ 42 for b in msg])
 print(decifrada.decode())  # Saída: 26.5
 
-![Publicação com mosquitto-pub](Images/mosquitto-pub - Etapa 5.png)
+![Publicação com mosquitto-pub](Images/mosquitto-pub_Etapa 5.png)
 
-![Recepção com mosquitto-sub](Images/mosquitto-sub - Etapa 5.png)
+![Recepção com mosquitto-sub](Images/mosquitto-sub_Etapa 5.png)
 
 Códigos da etapa 5:
 SecurePicoMQTT.c:
