@@ -73,7 +73,7 @@ SecurePicoMQTT/
   - Arquivos: `wifi_conn.c`, `wifi_conn.h`, `SecurePicoMQTT.c`, `CMakeLists.txt`
   - Código bloquenate que configura o chip CYW43 para modo estação (STA) e tenta conexão com timeout de 30 segundos.
 
-#### Código:
+#### Código
 
 - main.c:
 ```c
@@ -142,7 +142,8 @@ void connect_to_wifi(const char *ssid, const char *password);
 #endif // WIFI_CONN_H
 ```
 
-- **Resultado**: Conexão bem-sucedida, confirmada no monitor serial:
+#### Resultado: 
+- Conexão bem-sucedida, confirmada no monitor serial:
   ```
   ---- Opened the serial port COM4 ----
   Conectado ao Wi-Fi
