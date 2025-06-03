@@ -20,8 +20,8 @@ Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDo
 ## Introdução
 
 - O que é MQTT?  
-MQTT (Message Queuing Telemetry Transport) é um protocolo de comunicação leve e eficiente, projetado para conectar dispositivos em redes com pouca largura de banda, latência alta ou conectividade intermitente — exatamente o tipo de ambiente encontrado em aplicações de Internet das Coisas (IoT).
-O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os dispositivos podem atuar como:
+  MQTT (Message Queuing Telemetry Transport) é um protocolo de comunicação leve e eficiente, projetado para conectar dispositivos em redes com pouca largura de banda, latência alta ou conectividade intermitente — exatamente o tipo de ambiente encontrado em aplicações de Internet das Coisas (IoT).
+  O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os dispositivos podem atuar como:
 
   - Publicadores (publishers): enviam mensagens sobre determinado tópico (ex: "sensor/temperatura").
 
@@ -34,7 +34,6 @@ O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os di
 
 - O que é o Mosquitto?  
   Mosquitto é uma implementação leve e de código aberto de um broker MQTT. Ele é amplamente usado em projetos de IoT por sua facilidade de uso, suporte a autenticação, criptografia e compatibilidade com diversas plataformas, incluindo sistemas embarcados como o Raspberry Pi Pico W.
-
 
 ## Materiais Necessários
 
@@ -57,7 +56,7 @@ O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os di
 SecurePicoMQTT/
 ├── CMakeLists.txt
 ├── main.c
-├──src/display_oled.c 
+├──src/display_oled.c
 ├──include/display_oled.h
 ├──src/mqtt_comm.c
 ├── include/mqtt_comm.h
@@ -87,6 +86,7 @@ SecurePicoMQTT/
 ## Etapas de Implementação
 
 ### Etapa 1: Conexão Wi-Fi
+
 - **Objetivo**: Conectar a Pico W a uma rede Wi-Fi usando autenticação WPA2.
 - **Implementação**:
   - Arquivos: `wifi_conn.c`, `wifi_conn.h`, `SecurePicoMQTT.c`, `CMakeLists.txt`
@@ -95,6 +95,7 @@ SecurePicoMQTT/
 #### Código
 
 - main.c:
+
 ```c
 #include "include/wifi_conn.h"
 #include "pico/stdlib.h"
@@ -123,7 +124,8 @@ int main() {
 ```
 
 - wifi_conn.c:
-```c
+
+````c
 #include "include/wifi_conn.h"         // Cabeçalho com a declaração da função de conexão Wi-Fi
 #include "pico/cyw43_arch.h"           // Biblioteca para controle do chip Wi-Fi CYW43 no Raspberry Pi Pico W
 #include <stdio.h>                     // Biblioteca padrão de entrada/saída (para usar printf)
@@ -146,7 +148,7 @@ void connect_to_wifi(const char *ssid, const char *password) {
     // Utiliza autenticação WPA2 com criptografia AES.
     if (cyw43_arch_wifi_connect_timeout_ms(ssid, password, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
         printf("Erro ao conectar\n");  // Se falhar, imprime mensagem de erro.
-    } else {        
+    } else {
         printf("Conectado ao Wi-Fi\n");  // Se conectar com sucesso, exibe confirmação.
     }
 }
@@ -159,21 +161,25 @@ void connect_to_wifi(const char *ssid, const char *password) {
 void connect_to_wifi(const char *ssid, const char *password);
 
 #endif
-```
+````
 
 #### Resultado
+
 - Conexão bem-sucedida, confirmada no monitor serial:
-  ```
+  ```text
   ---- Opened the serial port COM4 ----
   Conectado ao Wi-Fi
   ```
+
 ---
+
 ### Etapa 2: Configuração MQTT Básica
+
 - **Objetivo**: Estabelecer conexão com o broker Mosquitto e publicar mensagens no tópico `test/topic`.
 - **Implementação**:
   - Arquivos adicionados: `main.c`, `mqtt_comm.c`, `mqtt_comm.h`, `lwipopts.h` modificado.
   - Configuração do broker com autenticação (usuário: `aluno`, senha: `senha123`).
-  - Solução de problema: Firewall do Windows bloqueava pacotes MQTT na porta 1883. Criada regra de entrada para permitir tráfego TCP na porta 1883.
+  - Solução de problema: Firewall do Windows bloqueava pacotes MQTT na porta 1883. Solucionado com a execução do Wireshark com filtro `tcp.port == 1883, após inicializar o broker mosquitt, impedindo que o Windoes bloqueie pacotes silenciosamente. O Wireshark, ao ativar o modo promíscuo, força a rede a escutar pacotes externos, o que acaba desbloqueando a comunicação com a Pico W.
 
 #### Código
 
@@ -188,7 +194,7 @@ void connect_to_wifi(const char *ssid, const char *password);
 int main() {
     // Inicializa a biblioteca padrão do Pico (necessária para GPIO, UART, etc.)
     stdio_init_all();
-    
+
     // Aguarda inicialização do USB para depuração (opcional, dá tempo para o console conectar)
     sleep_ms(5000);
 
@@ -219,7 +225,7 @@ int main() {
         // Mensagem de teste
         const char *message = "Hello, MQTT!";
         const char *topic = "test/topic";
-        
+
         // Publica a mensagem no tópico
         mqtt_comm_publish(topic, (const uint8_t *)message, strlen(message));
 
@@ -263,7 +269,7 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
  *   - pass: senha para autenticação (pode ser NULL) */
 void mqtt_setup(const char *client_id, const char *broker_ip, const char *user, const char *pass) {
     ip_addr_t broker_addr;  // Estrutura para armazenar o IP do broker
-    
+
     // Converte o IP de string para formato numérico
     if (!ip4addr_aton(broker_ip, &broker_addr)) {
         printf("Erro no IP\n");
@@ -362,40 +368,42 @@ void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len);
 
 #endif
 ```
-- modificações em lwipopts.h:  
+
+- modificações em lwipopts.h:
 ```c
 #define MEMP_NUM_SYS_TIMEOUT   (LWIP_NUM_SYS_TIMEOUT_INTERNAL + 1)
 #define MQTT_REQ_MAX_IN_FLIGHT  (5)
 ```
 
 #### Resultado
-- Monitor serial:
-Monitor Serial:
-```
----- Opened the serial port COM4 ----
-Conectado ao Wi-Fi
-Conectado ao broker MQTT com sucesso!
-Publicação MQTT enviada com sucesso!
-Publicação MQTT enviada com sucesso!
-Publicação MQTT enviada com sucesso!
-Publicação MQTT enviada com sucesso!
-Publicação MQTT enviada com sucesso!
-```
+
+- Antes de executar Wireshark, no monitor serial da IDE VS Code:
+  ```text
+  Aguardando conexão MQTT...
+  Falha ao conectar ao broker MQTT. Abortando.
+  ````
+
+- Após a execução do Wireshark:
+  ```text
+  ---- Opened the serial port COM4 ----
+  Conectado ao Wi-Fi
+  Conectado ao broker MQTT com sucesso!
+  Publicação MQTT enviada com sucesso!
+  Publicação MQTT enviada com sucesso!
+  Publicação MQTT enviada com sucesso!
+  Publicação MQTT enviada com sucesso!
+  Publicação MQTT enviada com sucesso!
+  ```
 
 
-
-    ```
-    Conectado ao Wi-Fi
-    Conectado ao broker MQTT com sucesso!
-    Publicação MQTT enviada com sucesso!
-    ```
-  - Log do Mosquitto:
-    ```
-    New client connected from 192.168.15.102 as pico_client
-    Received PUBLISH from pico_client on topic test/topic
-    ```
+- Log do Mosquitto:
+  ```
+  New client connected from 192.168.15.102 as pico_client
+  Received PUBLISH from pico_client on topic test/topic
+  ```
 
 ### Etapa 3: Publicação em Texto Claro
+
 - **Objetivo**: Publicar mensagem `"26.5"` no tópico `escola/sala1/temperatura`.
 - **Implementação**:
   - Substituição no `SecurePicoMQTT.c`:
@@ -411,6 +419,7 @@ Publicação MQTT enviada com sucesso!
     ```
 
 ### Etapa 4: Autenticação no Mosquitto
+
 - **Objetivo**: Configurar autenticação no broker e testar com cliente.
 - **Implementação**:
   - Configuração do `mosquitto.conf`:
@@ -428,6 +437,7 @@ Publicação MQTT enviada com sucesso!
   - Publicações manuais de `"37.3"`, `"38.4"`, `"40.2"` no tópico `escola/sala1/temperatura` foram recebidas corretamente.
 
 ### Etapa 5: Criptografia com XOR
+
 - **Objetivo**: Ofuscar mensagens com cifra XOR (chave 42) para evitar sniffing básico.
 - **Implementação**:
   - Arquivos adicionados: `xor_cipher.c`, `xor_cipher.h`
@@ -450,6 +460,7 @@ Publicação MQTT enviada com sucesso!
   - Log do Mosquitto confirmou recebimento.
 
 ### Etapa 6: Proteção contra Replay
+
 - **Objetivo**: Adicionar timestamp às mensagens para evitar ataques de replay.
 - **Implementação**:
   - Timestamp gerado com `to_ms_since_boot(get_absolute_time())` (ex.: `396547116` ms ≈ 6 minutos e 36 segundos desde o boot).
