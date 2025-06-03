@@ -766,7 +766,7 @@ As imagens abaixo mostram testes locais realizados com o broker Mosquitto, usand
 📤 Publicação das mensagens via terminal:
 
 
-![Publicação com mosquitto-pub](Images/mosquitto_pub_Etapa4.png)  
+![Publicação com mosquitto-pub](Images/mosquitto_pub_etapa4.png)  
 *Figura 2 - Publicação com mosquitto-pub.*
 
 📥 Assinatura e recepção das mensagens com `mosquitto_sub`:
