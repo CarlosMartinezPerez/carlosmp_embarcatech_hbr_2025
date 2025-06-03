@@ -655,16 +655,16 @@ print(decifrada.decode())  # Saída: 26.5
 
 ### Etapa 6: Proteção contra Replay
 
-- **Objetivo**: Adicionar timestamp às mensagens para evitar ataques de replay.
+- **Objetivo**: Proteção Contra Replay, pela adição de timestamps às mensagens, evitando ataques de replay, demonstrado pela aceitação de mensagens com timestamps crescentes e pela rejeição explícita ("Replay detectado...") de mensagens com timestamps antigos ou repetidos, tanto os publicados pelo próprio Pico W quanto os simulados via mosquitto_pub.
 - **Implementação**:
   - Timestamp gerado com `to_ms_since_boot(get_absolute_time())` (ex.: `396547116` ms ≈ 6 minutos e 36 segundos desde o boot).
   - Sugestão de formato legível: `T=26.5 t=396.5s`.
-- **Resultado**:
-  - Timestamp incluído, mas formato bruto exibido (`396547116`). Necessária implementação no subscriber para validar timestamps e descartar mensagens antigas.
 
----
+#### Código
 
-## 📡 Resultado
+O código desta etapa está publicado neste repositório.
+
+#### Resultado
 
 - **Conexão Wi-Fi**: Estabelecida com sucesso.
 - **Conexão MQTT**: Funcionando com autenticação no broker Mosquitto.
@@ -673,27 +673,66 @@ print(decifrada.decode())  # Saída: 26.5
   - Autenticação implementada no Mosquitto.
   - Criptografia XOR aplicada, com mensagem ofuscada capturada no Wireshark.
   - Timestamp adicionado para proteção contra replay (pendente validação no subscriber).
-- **Diagnóstico**: Problema de firewall resolvido com regra TCP na porta 1883. Wireshark foi essencial para identificar pacotes bloqueados.
+- **Diagnóstico**: Problema de firewall resolvido com regra TCP na porta 1883. Wireshark foi essencial para identificar pacotes bloqueados, deixando a rede em modo promíscuo.
 
----
+#### Funcionalidades
 
-## 🧠 Lições Aprendidas
+- Modos de Operação: Publisher e Subscriber
+**Publisher**: Uma placa configurada como publisher simula a medição de temperatura e publica os dados em um tópico MQTT específico (ex.: escola/sala1/temperatura). A temperatura é gerada aleatoriamente (25.0°C a 29.9°C) para testes, mas pode ser adaptada para sensores reais.  
 
-- **Firewall do Windows**: Pode bloquear pacotes MQTT silenciosamente, mesmo com regras explícitas. O Wireshark em modo promíscuo mascara o problema temporariamente.
-- **lwIP**: Sensível a descartes silenciosos de pacotes, exigindo configuração cuidadosa do ambiente de rede.
-- **Criptografia XOR**: Eficaz para ofuscação básica, mas inadequada para segurança robusta devido à simplicidade.
-- **Testes de Rede**: Essenciais para validar comportamento em ambientes reais, especialmente em sistemas embarcados.
+**Subscriber**: Uma placa configurada como subscriber se inscreve em tópicos MQTT (ex.: escola/# para todas as salas ou escola/sala1/temperatura para testes específicos) e exibe as temperaturas recebidas em um display OLED.  
 
----
+Formato da mensagem: T=<temperatura> <timestamp> (ex.: T=26.5 12345678), criptografada com XOR antes do envio.
 
-## 🔒 Próximos Passos
+- Subscrição e Exibição de Dados
+O subscriber recebe mensagens retidas e em tempo real, descriptografa o payload, e exibe no display OLED:  
+Primeira linha: Temperatura (ex.: T=26.50).  
+Segunda linha: Timestamp (ex.: Ts=12345678).  
+Terceira linha: Tópico (ex.: escola/sala1/temperatura).  
 
-- **Melhorar Criptografia**: Substituir XOR por AES ou HMAC usando mbedTLS para maior segurança.
-- **Proteger contra Replay**: Implementar validação de timestamps no subscriber, descartando mensagens com timestamps antigos.
-- **Escalabilidade**: Testar com múltiplas placas BitDogLab em uma rede escolar, ajustando QoS e tópicos.
-- **TLS**: Migrar para MQTT com TLS (porta 8883) para criptografia de transporte.
+Um LED verde (LED_VD) pisca uma vez ao receber uma mensagem válida, indicando atividade.  
+O uso do tópico wildcard escola/# em produção permite monitorar temperaturas de múltiplas salas.  
 
----
+- Criptografia Simples com XOR
+As mensagens são criptografadas com um algoritmo XOR (chave fixa: XOR_KEY=42) antes da publicação e descriptografadas no subscriber.  
+O payload é convertido para formato hexadecimal, garantindo compatibilidade com o protocolo MQTT.  
+Embora funcional, a criptografia XOR é básica e pode ser substituída por AES ou TLS em produção para maior segurança.  
+
+- Conectividade Wi-Fi e MQTT
+A placa se conecta a uma rede Wi-Fi configurada (SSID e senha definidos em main.c) e ao broker MQTT (IP, usuário, e senha configuráveis).  
+Suporte a reconexão automática com timeout de 10 segundos, exibindo erros no OLED (ex.: "MQTT ERRO: Timeout") se a conexão falhar.  
+Integração com a biblioteca lwIP para comunicação MQTT eficiente em sistemas embarcados.  
+
+- Interface com Display OLED
+Um display OLED SSD1306 exibe informações em tempo real, como:  
+Modo atual (PUBLISHER ou SUBSCRIBER).  
+Mensagens de erro (ex.: "MQTT ERRO: IP inválido").  
+Dados recebidos no modo subscriber.  
+
+A inicialização do display é feita via I2C, com limpeza e configuração automáticas ao iniciar a placa.
+
+- Interação com Botões e LEDs
+Botão A: Ativa o modo publisher. Enquanto nesse modo, reenvia a última mensagem no modo publisher, para teste de replay.  
+Botão B: Ativa o modo subscriber. No modo Publisher, publica uma nova mensagem a cada pressionada.  
+Debounce de 300ms evita leituras múltiplas.  
+LED vermelho (LED_VM): Pisca ao publicar uma mensagem (nova ou repetida).  
+LED verde (LED_VD): Pisca ao receber uma mensagem válida no subscriber.  
+
+- Gerenciamento de Erros
+O sistema detecta e exibe erros, como:  
+Falha na conexão Wi-Fi ou MQTT.  
+Endereço IP inválido do broker.  
+Timeout na conexão.  
+Mensagens de erro são exibidas no OLED por 2-3 segundos antes de reinicializar o display.  
+
+- Testes e Depuração
+
+Suporte a ferramentas externas, como mosquitto_sub e mosquitto_pub, para verificar mensagens no broker.
+Logs detalhados via UART (stdio) ajudam na depuração (ex.: "Conectado ao broker MQTT", "Erro no parse da mensagem").  
+Modo de teste com tópico específico (ex.: escola/sala1/temperatura) facilita a validação da retenção.  
+A possibilidade de ativar a retenção de mensagens foi uma maneira de testar a recepção de mensagens pelo subscriber nas fases de desenvolvimento e testes.  
+Além disso, para desenvolver e testar o modo subscriber foi criado o script python `mosq_pub.py`, executado via terminal, que enite 5 mensagens no formato do projeto, sendo as duas últimas repetidas.  
+
 
 ## 📚 Referências
 
@@ -704,7 +743,87 @@ print(decifrada.decode())  # Saída: 26.5
 
 ---
 
-## 💡 Observações
+## Considerações Finais
 
-- Durante os testes, foi necessário manter o Wireshark ativo para contornar bloqueios do firewall no Windows. Para ambientes de produção, recomenda-se usar Linux ou configurar o broker em um dispositivo dedicado (ex.: Raspberry Pi).
-- A implementação de timestamp no subscriber precisa ser concluída para validar proteção contra replay.
+### Quais dessas técnica são escaláveis?
+
+As técnicas implementadas possuem diferentes níveis de escalabilidade:
+
+- Conexão Wi-Fi e MQTT (Pico SDK + LwIP): Extremamente escalável. O Pico SDK e o LwIP são projetados para ambientes embarcados e podem suportar um grande número de dispositivos conectando-se a uma rede Wi-Fi e a um broker MQTT. A arquitetura threadsafe_background do Pico W garante que a pilha de rede não bloqueie a aplicação principal, o que é vital para centenas ou milhares de dispositivos.
+- Autenticação Básica (usuário/senha no Mosquitto): Esta técnica é fundamental e escalável. O Mosquitto é capaz de lidar com um grande número de usuários autenticados, embora a gestão de senhas possa se tornar complexa em grande escala. Para cenários maiores, integrar o Mosquitto com soluções de autenticação mais robustas (LDAP, banco de dados, etc.) seria o próximo passo. A sobrecarga para o dispositivo é mínima, pois ele apenas envia as credenciais uma vez na conexão.
+-Criptografia Leve (XOR): Embora funcional para ofuscação básica e demonstração, a criptografia XOR não é escalável para segurança real em ambientes de produção. Sua fraqueza reside no fato de que a chave é estática e, se interceptada ou deduzida, todas as mensagens podem ser decifradas. Para escalabilidade e segurança robusta, algoritmos como AES (Advanced Encryption Standard) ou TLS/SSL (Transport Layer Security) seriam essenciais. Implementar AES em microcontroladores como o Pico W é possível (com bibliotecas como mbedTLS), mas exige mais recursos computacionais.
+- Proteção Contra Replay (Timestamps): Esta técnica é altamente escalável e crucial. Timestamps são uma maneira eficaz e leve de prevenir ataques de replay. A sobrecarga computacional é mínima (parseamento de JSON e comparação de números). Para garantir a eficácia, é fundamental que todos os dispositivos tenham uma fonte de tempo sincronizada (e.g., via NTP - Network Time Protocol), o que pode ser um desafio em escala. Para uma rede escolar, um servidor NTP local poderia ser configurado para sincronizar todos os dispositivos.
+
+
+### Como aplicá-las com várias BitDogLab em rede escolar?
+
+Aplicação em Rede Escolar com Várias BitDogLab
+A aplicação das técnicas em uma rede escolar com várias placas BitDogLab pode ser imaginada da seguinte forma:
+
+- Infraestrutura Centralizada:
+  - Broker MQTT Central: Um único Mosquitto broker (ou um cluster de brokers para alta disponibilidade) rodando em um servidor na rede escolar. Este servidor teria um IP fixo conhecido por todas as BitDogLabs.
+  - Servidor NTP (Opcional, mas Recomendado): Para a proteção contra replay, seria ideal ter um servidor NTP na rede local para que todas as BitDogLabs possam sincronizar seus RTCs. Isso garante que os timestamps sejam precisos e consistentes entre os dispositivos.
+
+- Conectividade Wi-Fi:
+  - Todas as BitDogLabs seriam configuradas para se conectar à mesma rede Wi-Fi escolar (SSID e senha comuns). Isso é feito uma vez no firmware de cada placa.
+  - Pontos de acesso Wi-Fi distribuídos pela escola garantiriam cobertura e capacidade para múltiplos dispositivos.
+
+- Autenticação Centralizada:
+  - O Mosquitto broker seria configurado para exigir autenticação (usuário/senha) para todas as conexões.
+  - Cada BitDogLab receberia um conjunto de credenciais no seu firmware. Para maior segurança e granularidade, cada placa poderia ter um par usuário/senha único, ou credenciais de grupo para determinados laboratórios/salas. A gestão dessas credenciais se tornaria mais complexa com muitos dispositivos.
+  - Alternativamente, um sistema de ACL (Access Control List) no Mosquitto poderia ser usado para permitir que grupos de dispositivos publiquem/subscribam em tópicos específicos (ex: escola/sala1/temperatura, escola/laboratorio_fisica/umidade).
+
+- Criptografia de Dados (AES em vez de XOR):
+  - Considerando uma rede escolar, a criptografia XOR seria inadequada para dados sensíveis. O ideal seria implementar AES (Advanced Encryption Standard) para criptografar os payloads MQTT.
+  - Isso exigiria a integração de uma biblioteca AES (como mbedTLS, que é otimizada para embarcados) no firmware de cada BitDogLab.
+  - A gestão de chaves AES seria um desafio. Poderiam ser chaves pré-compartilhadas (simples, mas menos seguras em escala) ou, em um cenário mais avançado, um mecanismo de troca de chaves seguro.
+
+- Proteção Contra Replay:
+  - Todas as BitDogLabs publicariam mensagens contendo timestamps precisos (sincronizados via NTP).
+  - Os assinantes (outras BitDogLabs, um servidor de coleta de dados, etc.) validariam esses timestamps, descartando mensagens antigas ou repetidas.
+  - Isso seria especialmente útil para dados de sensores (temperatura, presença) onde um replay de "porta aberta" ou "temperatura baixa" poderia ter implicações de segurança ou conforto.
+
+- Gerenciamento e Monitoramento:
+  - Com muitas placas, seria útil ter uma plataforma de gerenciamento de dispositivos para monitorar o status das BitDogLabs, atualizar firmware remotamente e gerenciar configurações (como as credenciais MQTT).
+  - Ferramentas como o Wireshark seriam usadas por administradores de rede para monitorar o tráfego e garantir que as medidas de segurança estejam funcionando.
+Em resumo, a base de conectividade e o protocolo MQTT são altamente escaláveis. A autenticação básica é um bom começo, mas requer gestão cuidadosa em larga escala. A criptografia XOR deve ser substituída por AES para segurança real, e a proteção contra replay via timestamps é uma técnica leve e eficaz que se beneficia de uma fonte de tempo sincronizada centralmente. A arquitetura Thread-Safe background do Pico W é fundamental para a performance e escalabilidade de muitos dispositivos.
+
+### Glossário
+
+- AES (Advanced Encryption Standard): Um algoritmo de criptografia simétrica amplamente utilizado e considerado seguro para proteger dados sensíveis.
+- ACL (Access Control List - Lista de Controle de Acesso): Um conjunto de regras que especificam quais usuários ou dispositivos têm permissão para acessar ou realizar operações em determinados recursos (neste caso, tópicos MQTT).
+- Broker MQTT: Um servidor que atua como intermediário na comunicação MQTT, recebendo mensagens de publicadores e as entregando aos assinantes.
+- C/C++: Linguagens de programação de baixo nível, eficientes para programação embarcada.
+- CMake: Um sistema de build que gerencia o processo de compilação de software, especialmente útil em projetos multiplataforma.
+- Credenciais: Informações (geralmente nome de usuário e senha) usadas para autenticar a identidade de um usuário ou dispositivo.
+- Criptografia Leve (XOR): Um método simples de ofuscação de dados que aplica a operação XOR bit a bit com uma chave. É facilmente reversível e não oferece segurança robusta, sendo mais para fins didáticos ou ofuscação básica.
+- CYW43: O chip de conectividade Wi-Fi e Bluetooth usado no Raspberry Pi Pico W.
+- Firmware: O software de baixo nível que controla o hardware de um dispositivo embarcado.
+- Hotspot de Celular: Um ponto de acesso Wi-Fi criado a partir de um telefone celular, permitindo que outros dispositivos se conectem à internet através de sua conexão de dados móveis.
+- IoT (Internet das Coisas): Uma rede de objetos físicos incorporados com sensores e software que permitem a conexão e troca de dados com outros dispositivos pela internet.
+- IP (Internet Protocol): O protocolo de comunicação principal usado para endereçar e enviar pacotes de dados através de uma rede.
+- LwIP (Lightweight IP): Uma implementação leve da pilha de protocolos TCP/IP, projetada para sistemas embarcados com recursos limitados de memória e processamento.
+- Monitor Serial: Uma ferramenta de software que exibe a saída de depuração e logs de um dispositivo embarcado conectado via porta serial (ou USB simulando serial).
+- Mosquitto: Um popular broker MQTT de código aberto, leve e fácil de usar, comumente utilizado em projetos IoT.
+- MQTT (Message Queuing Telemetry Transport): Um protocolo de mensagens leve, "publish-subscribe", projetado para comunicação eficiente em ambientes com largura de banda e bateria limitadas, ideal para IoT.
+- NTP (Network Time Protocol): Um protocolo de rede para sincronizar os relógios de sistemas de computador através de redes de dados.
+- PATH (Variável de Ambiente): Uma variável de ambiente que contém uma lista de diretórios onde o sistema operacional procura por arquivos executáveis.
+- Payload: O conteúdo de uma mensagem, ou seja, os dados reais sendo transmitidos (excluindo cabeçalhos de protocolo).
+- Pico SDK: O kit de desenvolvimento de software oficial para o microcontrolador Raspberry Pi Pico, fornecendo bibliotecas e ferramentas para desenvolver aplicações.
+- Porta 1883: A porta TCP padrão para comunicação MQTT não criptografada.
+- Publisher (Publicador): Um cliente MQTT que envia mensagens para um tópico no broker.
+- QoS (Quality of Service - Qualidade de Serviço): No MQTT, define o nível de garantia de entrega de uma mensagem. QoS 0 ("At Most Once") significa que a mensagem é enviada uma vez e não há garantia de entrega ou que ela não será duplicada.
+- Raspberry Pi Pico W: Uma microcontroladora da Raspberry Pi com conectividade Wi-Fi integrada.
+- Replay Attack (Ataque de Replay): Um tipo de ataque de rede onde um invasor intercepta uma transmissão de dados válida e a retransmite para enganar o sistema e repetir uma ação autorizada.
+- RTC (Real-Time Clock - Relógio de Tempo Real): Um circuito que mantém o registro da hora e data, mesmo quando o dispositivo está desligado ou sem alimentação principal.
+- Sniffing: O processo de interceptar e inspecionar o tráfego de dados que passa por uma rede, muitas vezes para obter informações sensíveis.
+- SSID (Service Set Identifier): O nome identificador de uma rede Wi-Fi.
+- Subscriber (Assinante): Um cliente MQTT que se registra com o broker para receber mensagens de um ou mais tópicos.
+- Timestamp: Um valor numérico que representa um ponto específico no tempo, geralmente em segundos desde a "Época Unix" (1º de janeiro de 1970). Usado para verificar a validade e a ordem das mensagens.
+- TLS/SSL (Transport Layer Security / Secure Sockets Layer): Protocolos criptográficos que fornecem segurança de comunicação através de uma rede de computador, usados para criptografar o tráfego MQTT (MQTTs na porta 8883).
+- Tópico MQTT: Uma string hierárquica à qual as mensagens MQTT são publicadas e subscritas (ex: escola/sala1/temperatura).
+- VSCode (Visual Studio Code): Um editor de código fonte leve, mas poderoso, desenvolvido pela Microsoft.
+- Wi-Fi: Uma tecnologia de rede sem fio que permite que dispositivos eletrônicos se conectem à internet ou troquem dados sem cabos.
+- Wireshark: Uma ferramenta de software de análise de protocolo de rede que permite capturar e interativamente navegar pelo tráfego que passa por uma interface de rede.
+- WPA2-AES-PSK: Um método de segurança Wi-Fi que usa WPA2 (Wi-Fi Protected Access 2) com criptografia AES (Advanced Encryption Standard) e uma chave pré-compartilhada (PSK).
+- XOR: Uma operação lógica bit a bit (OU exclusivo) usada neste projeto para criptografia leve.
