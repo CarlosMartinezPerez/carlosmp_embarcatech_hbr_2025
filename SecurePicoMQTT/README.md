@@ -717,7 +717,7 @@ C:\Program Files\mosquitto>mosquitto -c mosquitto.conf -v
 
 
 Captura filtrada no Wireshark:
-![Tela do Wireshark](Images/Wireshark_Etapa3.png)
+![Tela do Wireshark](Images/Wireshark_Etapa3.png)  
 *Figura 1 - Tela do Wireshark.*
 
 ## 📷 Etapa 3: Publicação MQTT em texto claro
