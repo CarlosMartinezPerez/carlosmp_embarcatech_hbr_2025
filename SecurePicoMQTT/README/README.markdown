@@ -363,10 +363,10 @@ void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len);
 #endif
 ```
 - modificações em lwipopts.h:  
-´´´c
+```c
 #define MEMP_NUM_SYS_TIMEOUT   (LWIP_NUM_SYS_TIMEOUT_INTERNAL + 1)
 #define MQTT_REQ_MAX_IN_FLIGHT  (5)
-´´´
+```
 
 #### Resultado
 - Monitor serial:
