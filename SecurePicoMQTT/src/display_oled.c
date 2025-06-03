@@ -69,7 +69,7 @@ void display_oled_exibir_mensagem(const char* msg1, const char* msg2, const char
 
     ssd1306_draw_string(fb, 0, 16, (char*)msg1);
     ssd1306_draw_string(fb, 0, 32, (char*)msg2);
-    if (topic != NULL && modo == MODO_SUBSCRIBER) {
+    if (topic != NULL) { 
         ssd1306_draw_string(fb, 0, 48, (char*)topic);
     }
 

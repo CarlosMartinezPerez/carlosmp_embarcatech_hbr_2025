@@ -5,9 +5,9 @@
 
 void piscar_led(uint gpio_led) {
     gpio_put(gpio_led, 1);
-    sleep_ms(100);
+    sleep_ms(50);
     gpio_put(gpio_led, 0);
-    sleep_ms(900);
+    sleep_ms(950);
 }
 
 void inicializar_gpio() {

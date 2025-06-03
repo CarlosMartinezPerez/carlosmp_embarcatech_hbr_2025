@@ -3,6 +3,7 @@
 #include "include/mqtt_comm.h"
 #include "include/xor_cipher.h"
 #include "include/display_oled.h"
+#include "include/tratar_gpio.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -10,10 +11,8 @@ static mqtt_client_t *client = NULL;
 static char ultimo_topico[128] = {0};
 static bool mqtt_connected = false;
 static void (*user_callback)(const char*, const uint8_t*, size_t) = NULL;
-static int64_t ultima_timestamp_recebida = 0;
+static unsigned long ultima_timestamp_recebida = 0;
 modo_t modo_atual = MODO_PUBLISHER;
-
-
 
 bool is_mqtt_connected(void) {
     return mqtt_connected;
@@ -29,7 +28,7 @@ void mqtt_comm_disconnect(void) {
 }
 
 static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status) {
-    if (status == MQTT_CONNECT_ACCEPTED) {
+    if (status == MQTT_CONNECT_ACCEPTED) { // Changed from MQTT_SUCCESS to MQTT_CONNECT_ACCEPTED
         mqtt_connected = true;
         printf("Conectado ao broker MQTT.\n");
     } else {
@@ -60,10 +59,9 @@ static void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len
     ultimo_topico[sizeof(ultimo_topico) - 1] = '\0';
 }
 
-
 static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags) {
     if (user_callback) {
-        user_callback(ultimo_topico, data, len); // "topic" como placeholder
+        user_callback(ultimo_topico, data, len);
     } else {
         printf("Payload recebido: %.*s\n", len, data);
     }
@@ -109,13 +107,13 @@ mqtt_setup_result_t mqtt_setup(const char *client_id, const char *broker_ip, con
     return MQTT_OK;
 }
 
-void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len) {
+void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len, bool retained) {
     if (!mqtt_connected || client == NULL) {
         printf("Erro: Cliente MQTT não está conectado.\n");
         return;
     }
 
-    err_t status = mqtt_publish(client, topic, data, len, 0, 0, mqtt_pub_request_cb, NULL);
+    err_t status = mqtt_publish(client, topic, data, len, 0, retained ? 1 : 0, mqtt_pub_request_cb, NULL);
     if (status != ERR_OK) {
         printf("Falha ao enviar publicação MQTT: %d\n", status);
     }
@@ -143,48 +141,31 @@ void mqtt_register_callback(void (*cb)(const char*, const uint8_t*, size_t)) {
     mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, NULL);
 }
 
-// Converte uma string de dígitos hexadecimais para um vetor de bytes
-// Exemplo: "4A3F2C" → {0x4A, 0x3F, 0x2C}
-static void hexstr_to_bytes(const char* hexstr, uint8_t* bytes, size_t bytes_len) {
-    for (size_t i = 0; i < bytes_len; i++) {
-        sscanf(hexstr + 2*i, "%2hhx", &bytes[i]);
-    }
-}
-
-// Trata as mensagens recebidas: descriptografa, extrai dados (temperatura e timestamp), verifica se não
-// é mensagem repetida e chama rotina para exibir os dados no display OLED, se mensagem for válida
 void on_message_cb(const char* topic, const uint8_t* payload, size_t len) {
     if (len % 2 != 0) {
         printf("Payload com tamanho ímpar, inválido para hex.\n");
         return;
     }
 
-    size_t bytes_len = len / 2;
-    uint8_t mensagem_cript[64] = {0};
     char mensagem[64] = {0};
-
-    hexstr_to_bytes((const char*)payload, mensagem_cript, bytes_len);
-    xor_apply(mensagem_cript, (uint8_t*)mensagem, bytes_len, XOR_KEY);
-    mensagem[bytes_len] = '\0';
+    xor_decrypt_from_hex((const char*)payload, (uint8_t*)mensagem, XOR_KEY);
 
     float valor = 0;
-    int64_t nova_timestamp = 0;
-    if (sscanf(mensagem, "T=%f %" SCNd64, &valor, &nova_timestamp) != 2) {
+    unsigned long nova_timestamp = 0;
+    if (sscanf(mensagem, "T=%f %lu", &valor, &nova_timestamp) != 2) {
         printf("Erro no parse da mensagem: %s\n", mensagem);
         return;
     }
 
     if (nova_timestamp > ultima_timestamp_recebida) {
         ultima_timestamp_recebida = nova_timestamp;
-        printf("Recebido: T=%.2f, timestamp=%lld\n", valor, nova_timestamp);
-
+        printf("Recebido: T=%.1f, timestamp=%lu\n", valor, nova_timestamp);
+        piscar_led(LED_VD);
         char buf1[32], buf2[32];
-        snprintf(buf1, sizeof(buf1), "T=%.2f", valor);
-        snprintf(buf2, sizeof(buf2), "ts=%lld", nova_timestamp);
+        snprintf(buf1, sizeof(buf1), "T=%.1f", valor);
+        snprintf(buf2, sizeof(buf2), "Ts=%lu", nova_timestamp);
         display_oled_exibir_mensagem(buf1, buf2, topic, modo_atual);
     } else {
         printf("Replay detectado: %s\n", mensagem);
     }
 }
-
-

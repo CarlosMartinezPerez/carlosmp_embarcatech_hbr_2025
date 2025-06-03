@@ -14,15 +14,15 @@
 #include <string.h>
 
 #define WIFI_SSID "WIFI SSID"
-#define WIFI_PASS "WIFI PASS"
+#define WIFI_PASS "WIFI PASSWORD"
 #define MQTT_BROKER_IP "192.168.15.101"
-#define MQTT_USER "CarlosMP"
-#define MQTT_PASS "cajuca1801"
+#define MQTT_USER "aluno"
+#define MQTT_PASS "senha123"
 #define XOR_KEY 42
 
-#define CLIENT_ID "pico_pub_sala1"
-#define MQTT_PUB_TOPIC "escola/sala1/temperatura"
-#define MQTT_SUB_TOPIC "escola/#"
+#define CLIENT_ID "pico_pub_sala47"
+#define MQTT_PUB_TOPIC "escola/sala47/temperatura"
+#define MQTT_SUB_TOPIC "escola/#" // sala47/temperatura"
 
 int main() {
     stdio_init_all();
@@ -43,7 +43,7 @@ int main() {
         else if (!gpio_get(BOTAO_B)) { // Seleciona modo Subscriber
             sleep_ms(300);
             iniciar_subscriber(WIFI_SSID, WIFI_PASS, MQTT_BROKER_IP, 
-                MQTT_USER, MQTT_PASS);
+                MQTT_USER, MQTT_PASS, MQTT_SUB_TOPIC);
         }
     }
 }
