@@ -716,7 +716,8 @@ C:\Program Files\mosquitto>mosquitto -c mosquitto.conf -v
 
 
 
-Captura filtrada no Wireshark:
+Captura filtrada no Wireshark:  
+
 ![Tela do Wireshark](Images/Wireshark_Etapa3.png)  
 *Figura 1 - Tela do Wireshark.*
 
@@ -756,22 +757,25 @@ allow_anonymous false
 password_file C:\caminho\para\passwd
 
 O arquivo de senha foi criado com:
-mosquitto_passwd -c C:\caminho\para\passwd CarlosMP
+mosquitto_passwd -c C:\caminho\para\passwd aluno
+```
 
 
 ## 🧪 Testes com `mosquitto_pub` e `mosquitto_sub`
 
 As imagens abaixo mostram testes locais realizados com o broker Mosquitto, usando os comandos `mosquitto_pub` e `mosquitto_sub`. As mensagens `"37.3"`, `"38.4"` e `"40.2"` foram publicadas manualmente no tópico `escola/sala1/temperatura` com autenticação por usuário e senha. A segunda imagem confirma a recepção correta dessas mensagens pelo assinante.
 
-📤 Publicação das mensagens via terminal:
+📤 Publicação das mensagens via terminal:  
 
-
-![Publicação com mosquitto-pub](Images/mosquitto_pub_etapa4.png)  
+![Publicação com mosquitto-pub](Images/mosquitto_pubetapa4.png)  
 *Figura 2 - Publicação com mosquitto-pub.*
 
 📥 Assinatura e recepção das mensagens com `mosquitto_sub`:
 
-![Recepção com mosquitto-sub](Images/mosquitto_sub_Etapa4.png)  
+
+![Recepção com mosquitto-sub](Images/mosquitto_subetapa4.png)  
+
+
 *Figura 3 - Recepção com mosquitto-sub.*
 
 > Esses testes comprovam que o broker está ativo, autenticado, e recebendo corretamente as publicações da Pico W e do terminal local.
