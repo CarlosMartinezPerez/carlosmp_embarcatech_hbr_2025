@@ -21,12 +21,11 @@ Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDo
 
 - O que é MQTT?  
 MQTT (Message Queuing Telemetry Transport) é um protocolo de comunicação leve e eficiente, projetado para conectar dispositivos em redes com pouca largura de banda, latência alta ou conectividade intermitente — exatamente o tipo de ambiente encontrado em aplicações de Internet das Coisas (IoT).
-
 O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os dispositivos podem atuar como:
 
-    - Publicadores (publishers): enviam mensagens sobre determinado tópico (ex: "sensor/temperatura").
+  - Publicadores (publishers): enviam mensagens sobre determinado tópico (ex: "sensor/temperatura").
 
-    - Subscritores (subscribers): recebem as mensagens dos tópicos que assinaram.
+  - Subscritores (subscribers): recebem as mensagens dos tópicos que assinaram.
 
 Esse modelo desacopla os emissores e receptores — ou seja, eles não precisam conhecer a existência um do outro, o que facilita muito a escalabilidade e flexibilidade de sistemas IoT com dezenas ou centenas de dispositivos distribuídos.
 
