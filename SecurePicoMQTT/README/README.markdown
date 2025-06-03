@@ -1,12 +1,12 @@
 # SecurePicoMQTT - Segurança em IoT na BitDogLab com MQTT
 
-## 📋 Visão Geral
+## Visão Geral
 
 Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDogLab baseada no Raspberry Pi Pico W**, programada em C com o SDK do Pico e a pilha de rede lwIP. O objetivo é estabelecer uma conexão Wi-Fi, conectar-se a um broker MQTT (Mosquitto), publicar mensagens em tópicos específicos, implementar autenticação, aplicar criptografia leve com XOR e adicionar proteção contra ataques de sniffing e replay, atendendo aos requisitos da **Tarefa Unidade 2 - Parte 2** do programa **EMBARCATECH**.
 
 ---
 
-## 🎯 Objetivos
+## Objetivos
 
 - **Conexão Wi-Fi**: Estabelecer conexão com uma rede Wi-Fi protegida usando autenticação WPA2.
 - **Conexão MQTT**: Conectar a placa ao broker Mosquitto com autenticação de usuário e senha.
@@ -16,6 +16,26 @@ Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDo
 - **Diagnóstico de Rede**: Utilizar Wireshark para monitoramento e análise de tráfego, com solução de problemas de firewall.
 
 ---
+
+## Introdução
+
+- O que é MQTT?
+MQTT (Message Queuing Telemetry Transport) é um protocolo de comunicação leve e eficiente, projetado para conectar dispositivos em redes com pouca largura de banda, latência alta ou conectividade intermitente — exatamente o tipo de ambiente encontrado em aplicações de Internet das Coisas (IoT).
+
+O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os dispositivos podem atuar como:
+
+  - Publicadores (publishers): enviam mensagens sobre determinado tópico (ex: "sensor/temperatura").
+
+  - Subscritores (subscribers): recebem as mensagens dos tópicos que assinaram.
+
+Esse modelo desacopla os emissores e receptores — ou seja, eles não precisam conhecer a existência um do outro, o que facilita muito a escalabilidade e flexibilidade de sistemas IoT com dezenas ou centenas de dispositivos distribuídos.
+
+- O que é um broker MQTT?
+O broker é o servidor que faz o papel de intermediário: ele recebe mensagens dos publicadores e distribui para todos os subscritores interessados. Ele garante a entrega correta, eficiente e (em níveis mais avançados) confiável das mensagens.
+
+- O que é o Mosquitto?
+Mosquitto é uma implementação leve e de código aberto de um broker MQTT. Ele é amplamente usado em projetos de IoT por sua facilidade de uso, suporte a autenticação, criptografia e compatibilidade com diversas plataformas, incluindo sistemas embarcados como o Raspberry Pi Pico W.
+
 
 ## 🛠️ Materiais Necessários
 
