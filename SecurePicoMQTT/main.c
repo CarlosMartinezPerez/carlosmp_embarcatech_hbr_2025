@@ -13,6 +13,9 @@
 #include "include/mqtt_subscriber.h"
 #include <string.h>
 
+// Configurações para conexão Wi-Fi, MQTT e criptografia. 
+// Ajuste os valores abaixo conforme suas próprias configurações de rede, credenciais e 
+// ambiente de desenvolvimento e testes/produção.
 #define WIFI_SSID "WIFI SSID"
 #define WIFI_PASS "WIFI PASSWORD"
 #define MQTT_BROKER_IP "192.168.15.101"
@@ -20,9 +23,10 @@
 #define MQTT_PASS "senha123"
 #define XOR_KEY 42
 
-#define CLIENT_ID "pico_pub_sala47"
+#define CLIENT_ID "pico_pub_sala47" // Diferente para cada placa trabalhando como publisher
 #define MQTT_PUB_TOPIC "escola/sala47/temperatura"
-#define MQTT_SUB_TOPIC "escola/#" // sala47/temperatura"
+#define MQTT_SUB_TOPIC "escola/#" // Produção
+// #define MQTT_SUB_TOPIC "escola/sala 47/temperatura" // Desenvolvimento e testes
 
 int main() {
     stdio_init_all();

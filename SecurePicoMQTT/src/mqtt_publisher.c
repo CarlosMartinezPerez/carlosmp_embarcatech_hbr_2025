@@ -73,7 +73,7 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
             printf("Enviando nova mensagem (hex): %s\n", mensagem_hex);
 
             if (is_mqtt_connected()) {
-                mqtt_comm_publish(topico, (const uint8_t *)mensagem_hex, strlen(mensagem_hex), true); // Adicionado retained=true
+                mqtt_comm_publish(topico, (const uint8_t *)mensagem_hex, strlen(mensagem_hex), false); // true durante desenvolvimento e testes
                 printf("Mensagem publicada.\n");
 
                 strcpy(penultima_msg, ultima_msg);
@@ -98,7 +98,7 @@ void iniciar_publisher(const char *ssid, const char *senha, const char *broker_i
                 printf("Enviando mensagem repetida (hex): %s\n", mensagem_hex);
 
                 if (is_mqtt_connected()) {
-                    mqtt_comm_publish(topico, (const uint8_t *)mensagem_hex, strlen(mensagem_hex), true); // Adicionado retained=true
+                    mqtt_comm_publish(topico, (const uint8_t *)mensagem_hex, strlen(mensagem_hex), false); // true durante desenvolvimento e testes
                     printf("Mensagem repetida publicada.\n");
 
                     piscar_led(LED_VM);
