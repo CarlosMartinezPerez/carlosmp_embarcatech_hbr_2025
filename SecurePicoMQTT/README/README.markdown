@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDogLab baseada no Raspberry Pi Pico W**, programada em C/C++ com o SDK do Pico e a pilha de rede lwIP. O objetivo é estabelecer uma conexão Wi-Fi, conectar-se a um broker MQTT (Mosquitto), publicar mensagens em tópicos específicos, implementar autenticação, aplicar criptografia leve com XOR e adicionar proteção contra ataques de replay, atendendo aos requisitos da **Tarefa Unidade 2 - Parte 2** do curso de Segurança em IoT.
+Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDogLab baseada no Raspberry Pi Pico W**, programada em C com o SDK do Pico e a pilha de rede lwIP. O objetivo é estabelecer uma conexão Wi-Fi, conectar-se a um broker MQTT (Mosquitto), publicar mensagens em tópicos específicos, implementar autenticação, aplicar criptografia leve com XOR e adicionar proteção contra ataques de sniffing e replay, atendendo aos requisitos da **Tarefa Unidade 2 - Parte 2** do programa **EMBARCATECH**.
 
 ---
 
@@ -10,7 +10,7 @@ Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDo
 
 - **Conexão Wi-Fi**: Estabelecer conexão com uma rede Wi-Fi protegida usando autenticação WPA2.
 - **Conexão MQTT**: Conectar a placa ao broker Mosquitto com autenticação de usuário e senha.
-- **Publicação de Mensagens**: Enviar mensagens em texto claro e criptografadas no tópico `escola/sala1/temperatura`.
+- **Publicação de Mensagens**: Enviar mensagens em texto claro e criptografadas no tópico `escola/sala1/temperatura` e outros.
 - **Criptografia Leve**: Implementar ofuscação com cifra XOR (chave 42) para proteger contra sniffing básico.
 - **Proteção contra Replay**: Adicionar timestamp às mensagens para evitar ataques de repetição.
 - **Diagnóstico de Rede**: Utilizar Wireshark para monitoramento e análise de tráfego, com solução de problemas de firewall.
@@ -37,13 +37,27 @@ Este projeto implementa uma comunicação MQTT segura utilizando a placa **BitDo
 ```
 SecurePicoMQTT/
 ├── CMakeLists.txt
-├── SecurePicoMQTT.c
-├── mqtt_comm.c
-├── mqtt_comm.h
-├── wifi_conn.c
-├── wifi_conn.h
-├── xor_cipher.c
-├── xor_cipher.h
+├── main.c
+├──src/display_oled.c 
+├──include/display_oled.h
+├──src/mqtt_comm.c
+├── include/mqtt_comm.h
+├──src/mqtt_publisher.c
+├──include/mqtt_publisher.h
+├──src/mqtt_subscriber.c
+├──include/mqtt_subscriber.h
+├──src/tratar_gpio.c
+├──include/tratar_gpio.h
+├── src/wifi_conn.c
+├── include/wifi_conn.h
+├── src/xor_cipher.c
+├── include/xor_cipher.h
+├──oled/ssd1306_font.h
+├──oled/ssd1306_i2c.c
+├──oled/ssd1306_i2c.h
+├──oled/ssd1306.h
+├──.gitignore
+├──mosq_pub.py
 ├── lwipopts.h
 └── README.md
 ```
