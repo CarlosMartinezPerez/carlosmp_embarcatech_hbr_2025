@@ -766,11 +766,11 @@ As imagens abaixo mostram testes locais realizados com o broker Mosquitto, usand
 📤 Publicação das mensagens via terminal:
 
 
-![Publicação com mosquitto-pub](Images/mosquitto-pub_Etapa4.png)
+![Publicação com mosquitto-pub](Images/mosquitto_pub_Etapa4.png)
 
 📥 Assinatura e recepção das mensagens com `mosquitto_sub`:
 
-![Recepção com mosquitto-sub](Images/mosquitto-sub_Etapa4.png)
+![Recepção com mosquitto-sub](Images/mosquitto_sub_Etapa4.png)
 
 > Esses testes comprovam que o broker está ativo, autenticado, e recebendo corretamente as publicações da Pico W e do terminal local.
 
@@ -821,9 +821,9 @@ msg = bytes([0x18, 0x1C, 0x04, 0x1F])
 decifrada = bytes([b ^ 42 for b in msg])
 print(decifrada.decode())  # Saída: 26.5
 
-![Publicação com mosquitto-pub](Images/mosquitto-pub_Etapa5.png)
+![Publicação com mosquitto-pub](Images/mosquitto_pub_Etapa5.png)
 
-![Recepção com mosquitto-sub](Images/mosquitto-sub_Etapa5.png)
+![Recepção com mosquitto-sub](Images/mosquitto_sub_Etapa5.png)
 
 Códigos da etapa 5:
 SecurePicoMQTT.c:
