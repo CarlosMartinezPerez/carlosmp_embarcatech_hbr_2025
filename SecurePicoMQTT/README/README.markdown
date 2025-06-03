@@ -59,6 +59,7 @@ SecurePicoMQTT/
 ├──.gitignore
 ├──mosq_pub.py
 ├── lwipopts.h
+├── pico_sdk_import.cmake
 └── README.md
 ```
 
@@ -70,7 +71,77 @@ SecurePicoMQTT/
 - **Objetivo**: Conectar a Pico W a uma rede Wi-Fi usando autenticação WPA2.
 - **Implementação**:
   - Arquivos: `wifi_conn.c`, `wifi_conn.h`, `SecurePicoMQTT.c`, `CMakeLists.txt`
-  - Código configura o chip CYW43 para modo estação (STA) e tenta conexão com timeout de 30 segundos.
+  - Código bloquenate que configura o chip CYW43 para modo estação (STA) e tenta conexão com timeout de 30 segundos.
+
+#### Código:
+
+- main.c:
+```c
+#include "include/wifi_conn.h"
+#include "pico/stdlib.h"
+#include <stdio.h>
+
+int main() {
+    // Inicializa a biblioteca padrão do Pico (necessária para GPIO, UART, etc.)
+    stdio_init_all();
+    sleep_ms(2000); // Tempo para abrir o monitor serial
+
+    // Credenciais da rede Wi-Fi (substitua pelos valores reais)
+    const char *ssid = "minha-rede-wifi";
+    const char *password = "minha-senha-rede-wifi";
+
+    // Chama a função para conectar ao Wi-Fi
+    connect_to_wifi(ssid, password);
+
+    // Loop principal para manter o programa em execução
+    while (true) {
+        // Adicione aqui futuras funcionalidades (ex.: MQTT, autenticação, criptografia)
+        sleep_ms(1000); // Aguarda 1 segundo para evitar consumo excessivo de CPU
+    }
+
+    return 0;
+}
+```
+
+- wifi_conn.c:
+```c
+#include "include/wifi_conn.h"         // Cabeçalho com a declaração da função de conexão Wi-Fi
+#include "pico/cyw43_arch.h"           // Biblioteca para controle do chip Wi-Fi CYW43 no Raspberry Pi Pico W
+#include <stdio.h>                     // Biblioteca padrão de entrada/saída (para usar printf)
+
+/**
+ * Função: connect_to_wifi
+ * Objetivo: Inicializar o chip Wi-Fi da Pico W e conectar a uma rede usando SSID e senha fornecidos.
+ */
+void connect_to_wifi(const char *ssid, const char *password) {
+    // Inicializa o driver Wi-Fi (CYW43). Retorna 0 se for bem-sucedido.
+    if (cyw43_arch_init()) {
+        printf("Erro ao iniciar Wi-Fi\n");
+        return;
+    }
+
+    // Habilita o modo estação (STA) para se conectar a um ponto de acesso.
+    cyw43_arch_enable_sta_mode();
+
+    // Tenta conectar à rede Wi-Fi com um tempo limite de 30 segundos (30000 ms).
+    // Utiliza autenticação WPA2 com criptografia AES.
+    if (cyw43_arch_wifi_connect_timeout_ms(ssid, password, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+        printf("Erro ao conectar\n");  // Se falhar, imprime mensagem de erro.
+    } else {        
+        printf("Conectado ao Wi-Fi\n");  // Se conectar com sucesso, exibe confirmação.
+    }
+}
+
+- wifi_conn.h:
+```c
+#ifndef WIFI_CONN_H
+#define WIFI_CONN_H
+
+void connect_to_wifi(const char *ssid, const char *password);
+
+#endif // WIFI_CONN_H
+```
+
 - **Resultado**: Conexão bem-sucedida, confirmada no monitor serial:
   ```
   ---- Opened the serial port COM4 ----
