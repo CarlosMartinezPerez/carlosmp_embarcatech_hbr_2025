@@ -24,9 +24,9 @@ MQTT (Message Queuing Telemetry Transport) é um protocolo de comunicação leve
 
 O MQTT segue o modelo publish/subscribe (publicação/assinatura), no qual os dispositivos podem atuar como:
 
-  - Publicadores (publishers): enviam mensagens sobre determinado tópico (ex: "sensor/temperatura").
+    - Publicadores (publishers): enviam mensagens sobre determinado tópico (ex: "sensor/temperatura").
 
-  - Subscritores (subscribers): recebem as mensagens dos tópicos que assinaram.
+    - Subscritores (subscribers): recebem as mensagens dos tópicos que assinaram.
 
 Esse modelo desacopla os emissores e receptores — ou seja, eles não precisam conhecer a existência um do outro, o que facilita muito a escalabilidade e flexibilidade de sistemas IoT com dezenas ou centenas de dispositivos distribuídos.
 
