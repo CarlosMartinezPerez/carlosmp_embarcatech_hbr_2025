@@ -490,26 +490,168 @@ Assinatura e recepção das mensagens com `mosquitto_sub`:
 
 ### Etapa 5: Criptografia com XOR
 
-- **Objetivo**: Ofuscar mensagens com cifra XOR (chave 42) para evitar sniffing básico.
+- **Objetivo**: Criptografia Leve XOR, confirmada pela exibição de dados ofuscados (bytes hexadecimais) no payload do Wireshark  e pela capacidade do próprio Pico W (atuando como subscriber) de decifrar a mensagem e exibir o texto original no seu monitor serial.
 - **Implementação**:
   - Arquivos adicionados: `xor_cipher.c`, `xor_cipher.h`
-  - Código em `SecurePicoMQTT.c`:
-    ```c
-    const char* mensagem_clara = "26.5";
-    char mensagem_cript[32];
+
+#### Código
+
+- main.c:
+```c
+#include "pico/stdlib.h"
+#include "pico/cyw43_arch.h"
+#include "include/wifi_conn.h"
+#include "include/mqtt_comm.h"
+#include "include/xor_cipher.h"
+#include <stdio.h>
+#include <string.h>
+
+#define WIFI_SSID       "VIVOFIBRA-8991_EXT"
+#define WIFI_PASS       "cajuca1801"
+#define MQTT_BROKER_IP  "192.168.15.101"
+#define MQTT_USER       "CarlosMP"
+#define MQTT_PASS       "cajuca1801"
+#define MQTT_TOPIC      "test/topic"
+#define XOR_KEY         42
+
+int main() {
+  stdio_init_all();
+  sleep_ms(3000);  // Tempo para iniciar o terminal
+
+  printf("Conectando ao Wi-Fi...\n");
+  connect_to_wifi(WIFI_SSID, WIFI_PASS);
+  printf("Conectado ao Wi-Fi.\n");
+
+  printf("Conectando ao broker MQTT...\n");
+  mqtt_setup("pico_pub", MQTT_BROKER_IP, MQTT_USER, MQTT_PASS);
+  printf("Conectado ao broker MQTT.\n");
+
+  const char* mensagem_clara = "26.5";
+  char mensagem_cript[32];
+
+  while (true) {
     xor_encrypt((const uint8_t*)mensagem_clara, (uint8_t*)mensagem_cript, strlen(mensagem_clara), XOR_KEY);
-    mqtt_comm_publish(MQTT_TOPIC, (uint8_t*)mensagem_cript, strlen(mensagem_clara));
-    ```
-  - Mensagem `"26.5"` criptografada para `181C041F` (XOR com 0x2A).
-- **Resultado**:
-  - Wireshark capturou mensagem ofuscada (`181C041F`).
-  - Decriptografia via Python:
-    ```python
-    msg = bytes([0x18, 0x1C, 0x04, 0x1F])
-    decifrada = bytes([b ^ 42 for b in msg])
-    print(decifrada.decode())  # Saída: 26.5
-    ```
-  - Log do Mosquitto confirmou recebimento.
+    mqtt_comm_publish(MQTT_TOPIC, (const uint8_t*)mensagem_cript, strlen(mensagem_clara));
+    printf("Mensagem criptografada '%s' publicada com sucesso\n", mensagem_clara);
+
+    sleep_ms(5000);  // Aguarda 5 segundos
+  }
+
+  return 0;
+}
+```
+
+- xor_cipher.c:
+```c
+// Inclusão do arquivo de cabeçalho que contém a declaração da função
+#include "include/xor_cipher.h"
+
+/**
+* Função para aplicar cifra XOR (criptografia/decifração)
+* 
+* @param input  Ponteiro para os dados de entrada (texto claro ou cifrado)
+* @param output Ponteiro para armazenar o resultado (deve ter tamanho >= len)
+* @param len    Tamanho dos dados em bytes
+* @param key    Chave de 1 byte (0-255) para operação XOR
+* 
+* Funcionamento:
+* - Aplica operação XOR bit-a-bit entre cada byte do input e a chave
+* - XOR é reversível: mesma função para cifrar e decifrar
+* - Criptografia fraca (apenas para fins didáticos ou ofuscação básica)
+*/
+void xor_encrypt(const uint8_t *input, uint8_t *output, size_t len, uint8_t key) {
+    // Loop por todos os bytes dos dados de entrada
+    for (size_t i = 0; i < len; ++i) {
+        // Operação XOR entre o byte atual e a chave
+        // Armazena resultado no buffer de saída
+        output[i] = input[i] ^ key;
+    }
+}
+```
+
+- xor_cipher.h:
+```c
+#ifndef XOR_CIPHER_H
+#define XOR_CIPHER_H
+
+#include <stdint.h>
+#include <stddef.h>
+
+/**
+* @brief Aplica uma cifra XOR simples para criptografar ou descriptografar dados.
+*
+* Esta função realiza uma operação XOR byte a byte entre os dados de entrada
+* e uma chave de 1 byte. Por ser uma operação reversível, a mesma função pode
+* ser usada tanto para cifrar quanto para decifrar os dados.
+*
+* @param input   Ponteiro para os dados de entrada (texto claro ou cifrado).
+* @param output  Ponteiro para o buffer de saída (deve ter pelo menos 'len' bytes).
+* @param len     Tamanho dos dados em bytes.
+* @param key     Chave de 1 byte (valor entre 0 e 255).
+*/
+void xor_encrypt(const uint8_t *input, uint8_t *output, size_t len, uint8_t key);
+
+#endif
+```
+
+#### Resultado
+
+Monitor serial sem alteração.
+
+MQTT:
+C:\Program Files\mosquitto>mosquitto -c mosquitto.conf -v
+1748124916: mosquitto version 2.0.21 starting
+1748124916: Config loaded from mosquitto.conf.
+1748124916: Opening ipv6 listen socket on port 1883.
+1748124916: Opening ipv4 listen socket on port 1883.
+1748124916: mosquitto version 2.0.21 running
+1748126955: New connection from 192.168.15.100:56164 on port 1883.
+1748126955: New client connected from 192.168.15.100:56164 as pico_client (p2, c1, k0, u'CarlosMP').
+1748126955: No will message specified.
+1748126955: Sending CONNACK to pico_client (0, 0)
+1748126957: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+1748126962: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+1748126967: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+1748126972: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+1748126977: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+1748126982: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+1748126987: Received PUBLISH from pico_client (d0, q0, r0, m0, 'escola/sala1/temperatura', ... (4 bytes))
+
+Wireshark:
+![Tela do Wireshark](Images/Wireshark_Etapa5.png)  
+*Figura 4 - Tela do Wireshark.*
+
+Decriptografia da mensagem capturada 181C041F:
+Aplique XOR com 0x2A (42 decimal):
+Byte cifrado	XOR com 0x2A	Resultado	ASCII
+0x18	        0x2A	  0x32	'2'
+0x1C        	0x2A	  0x36	'6'
+0x04        	0x2A	  0x2E	'.'
+0x1F        	0x2A	  0x35	'5'
+
+Ou seja, exatamente a mensagem transmitida: 26.5.
+
+- Com mosquitto-pub e mosquitto-sub:
+
+- Comandos:
+  - mosquitto_pub -h 127.0.0.1 -t escola/sala1/temperatura -u aluno -P senha123 -f msg_cifrada.bin
+
+  - mosquitto_sub -h 192.168.15.101 -t escola/sala1/temperatura -u aluno -P senha123 --verbose
+
+- Script python para decriptografar:
+```python
+msg = bytes([0x18, 0x1C, 0x04, 0x1F])
+decifrada = bytes([b ^ 42 for b in msg])
+print(decifrada.decode())  # Saída: 26.5
+```
+
+![Publicação com mosquitto-pub](Images/mosquitto_pub_Etapa5.png)  
+*Figura 5 - Publicação com mosquitto-pub.*
+
+![Recepção com mosquitto-sub](Images/mosquitto_sub_Etapa5.png)  
+*Figura 6 - Recepção com mosquitto-sub.*
+
+---
 
 ### Etapa 6: Proteção contra Replay
 
@@ -522,7 +664,7 @@ Assinatura e recepção das mensagens com `mosquitto_sub`:
 
 ---
 
-## 📡 Resultados
+## 📡 Resultado
 
 - **Conexão Wi-Fi**: Estabelecida com sucesso.
 - **Conexão MQTT**: Funcionando com autenticação no broker Mosquitto.
