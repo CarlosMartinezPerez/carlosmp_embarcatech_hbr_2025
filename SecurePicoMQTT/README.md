@@ -475,11 +475,11 @@ void mqtt_comm_publish(const char *topic, const uint8_t *data, size_t len);
     ```
 
 📤 Publicação das mensagens via terminal:  
-![Publicação com mosquitto-pub](Images/mosquitto_pubetapa4.png)  
+![Publicação com mosquitto-pub](Images/mosquitto_pub_Etapa4.png)  
 *Figura 2 - Publicação com mosquitto-pub.*
 
 Assinatura e recepção das mensagens com `mosquitto_sub`:  
-![Recepção com mosquitto-sub](Images/mosquitto_subetapa4.png)  
+![Recepção com mosquitto-sub](Images/mosquitto_sub_Etapa4.png)  
 *Figura 3 - Recepção com mosquitto-sub.*
 
 #### Resultado
