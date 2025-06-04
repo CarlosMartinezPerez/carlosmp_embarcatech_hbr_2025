@@ -825,3 +825,4 @@ Em resumo, a base de conectividade e o protocolo MQTT são altamente escaláveis
 - [Mosquitto Documentation](https://mosquitto.org/)
 - [lwIP Documentation](https://www.nongnu.org/lwip/)
 - [BitDogLab GitHub](https://github.com/BitDogLab/BitDogLab-C)
+- [HIVEMQ](https://www.hivemq.com/blog/mqtt-essentials-part-1-introducing-mqtt/)
