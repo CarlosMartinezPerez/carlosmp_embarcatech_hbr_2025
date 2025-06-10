@@ -1,0 +1,7 @@
+build/
+.vscode/
+buid/
+pico_sdk_import.cmake
+leituras
+
+
