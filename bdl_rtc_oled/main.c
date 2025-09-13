@@ -12,8 +12,8 @@
 #include "ssd1306.h"
 #include "ssd1306_i2c.h"
 
-#define WIFI_SSID "VIVOFIBRA-8991_EXT"
-#define WIFI_PASS "pipoca1409"
+#define WIFI_SSID "sua rede wifi"
+#define WIFI_PASS "senha wifi"
 
 #define I2C_PORT_RTC i2c0
 #define I2C_PORT_OLED i2c1

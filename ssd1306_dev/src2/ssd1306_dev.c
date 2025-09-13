@@ -26,10 +26,23 @@ int main() {
     ssd1306_show(); // Atualiza o display
     //sleep_ms(3000);
     //ssd1306_walk_horizontal_pixel();
-    
+    bool button_pressed = false;gpio_init(6);
+    gpio_set_dir(6, GPIO_IN);
+    gpio_pull_up(6);
+    ssd1306_draw_string(0, 56, " BOTAO B - SAIR ");
+    ssd1306_show();
 
     while (true) {
-        tight_loop_contents();  // Loop infinito vazio
+        if (!gpio_get(6)) {
+            sleep_ms(50);
+            button_pressed = true;
+        } else {
+            if (button_pressed) {
+                ssd1306_clear();
+                ssd1306_show();
+                break;
+            }
+        }
     }
     return 0;
 }
