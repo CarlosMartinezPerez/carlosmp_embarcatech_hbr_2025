@@ -12,8 +12,8 @@
 #include "ssd1306.h"
 #include "ssd1306_i2c.h"
 
-#define WIFI_SSID "sua rede wifi"
-#define WIFI_PASS "senha wifi"
+#define WIFI_SSID "VIVOFIBRA-8991_EXT"
+#define WIFI_PASS "pipoca1409"
 
 #define I2C_PORT_RTC i2c0
 #define I2C_PORT_OLED i2c1
@@ -33,6 +33,16 @@
 
 static struct udp_pcb *ntp_pcb;
 
+// Buffer para renderizar
+uint8_t ssd[ssd1306_buffer_length];
+struct render_area area = {
+        .start_column = 0,
+        .end_column = ssd1306_width - 1,
+        .start_page = 0,
+        .end_page = ssd1306_n_pages - 1
+};
+
+// ==================== NTP callback =====================
 static void ntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
                      const ip_addr_t *addr, u16_t port) {
     if (p != NULL && p->tot_len >= NTP_MSG_LEN) {
@@ -97,23 +107,10 @@ static void ntp_request() {
     pbuf_free(p);
 }
 
+// ==================== MAIN =====================
 int main() {
     stdio_init_all();
     sleep_ms(3000);
-
-    if (cyw43_arch_init()) {
-        printf("Erro ao inicializar Wi-Fi\n");
-        return -1;
-    }
-
-    cyw43_arch_enable_sta_mode();
-    printf("Conectando ao Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASS,
-        CYW43_AUTH_WPA2_AES_PSK, 10000)) {
-        printf("❌ Falha Wi-Fi\n");
-        return -1;
-    }
-    printf("✅ Wi-Fi conectado!\n");
 
     // Inicializa I2C (RTC DS3231e OLED SSD1306)
     i2c_init(I2C_PORT_RTC, 400 * 1000);
@@ -126,26 +123,39 @@ int main() {
     gpio_pull_up(SCL_PIN_RTC);
     gpio_pull_up(SDA_PIN_OLED);
     gpio_pull_up(SCL_PIN_OLED);
-    printf("I2C iniciado para RTC DS3231 e SSD1306\n");
+    printf("I2C iniciado para RTC DS3231 e OLED SSD1306\n");
+    
     ssd1306_init(I2C_PORT_OLED, 0x3C, 128, 64);
-
-    // Buffer para renderizar
-    uint8_t ssd[ssd1306_buffer_length];
-    struct render_area area = {
-        .start_column = 0,
-        .end_column = ssd1306_width - 1,
-        .start_page = 0,
-        .end_page = ssd1306_n_pages - 1
-    };
     calculate_render_area_buffer_length(&area);
 
-    // UDP socket para NTP
-    ntp_pcb = udp_new();
-    udp_bind(ntp_pcb, IP_ADDR_ANY, 0);
-    udp_recv(ntp_pcb, ntp_recv, NULL);
+    // Mensagem inicial
+    memset(ssd, 0, sizeof(ssd));
+    ssd1306_draw_string(ssd, 0, 0, "Iniciando...");
+    render_on_display(ssd, &area);
 
-    // Solicita hora do NTP
-    ntp_request();
+    // Inicializa Wi-Fi
+    bool wifi_ok = false;
+    if (cyw43_arch_init()) {
+        printf("Erro ao inicializar Wi-Fi\n");
+    } else {
+        cyw43_arch_enable_sta_mode();
+        printf("Conectando ao Wi-Fi...\n");
+        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASS,
+            CYW43_AUTH_WPA2_AES_PSK, 10000)) {
+            printf("⚠️ Falha Wi-Fi. Usando só RTC.\n");
+        } else {
+            printf("✅ Wi-Fi conectado!\n");
+            wifi_ok = true;
+        }
+    }
+
+    // Se Wi-Fi funcionou → sincroniza via NTP
+    if (wifi_ok) {
+        ntp_pcb = udp_new();
+        udp_bind(ntp_pcb, IP_ADDR_ANY, 0);
+        udp_recv(ntp_pcb, ntp_recv, NULL);
+        ntp_request();
+    }
 
     // Loop principal → lê do RTC e mostra
     while (true) {
