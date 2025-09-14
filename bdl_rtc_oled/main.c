@@ -12,35 +12,37 @@
 #include "ssd1306.h"
 #include "ssd1306_i2c.h"
 
-#define WIFI_SSID "sua rede wifi"
-#define WIFI_PASS "sua senha wifi"
+#define WIFI_SSID "VIVOFIBRA-8991_EXT"
+#define WIFI_PASS "pipoca1409"
 
+// RTC DS3231 (I2C0)
 #define I2C_PORT_RTC i2c0
-#define I2C_PORT_OLED i2c1
 #define SDA_PIN_RTC  0
 #define SCL_PIN_RTC  1
-#define SDA_PIN_OLED 14
-#define SCL_PIN_OLED  15
 
+// OLED SSD1306 (I2C1)
+#define I2C_PORT_OLED i2c1
+#define SDA_PIN_OLED 14
+#define SCL_PIN_OLED 15
 
 #define NTP_SERVER "pool.ntp.org"
 #define NTP_PORT 123
 #define NTP_MSG_LEN 48
-#define NTP_DELTA 2208988800u // diferença 1900 → 1970
+#define NTP_DELTA 2208988800u
 
-// UTC offset Brasil (horário de Brasília)
-#define TZ_OFFSET -3  
+#define TZ_OFFSET -3  // UTC-3 Brasil
 
 static struct udp_pcb *ntp_pcb;
 
-// Buffer para renderizar
 uint8_t ssd[ssd1306_buffer_length];
 struct render_area area = {
-        .start_column = 0,
-        .end_column = ssd1306_width - 1,
-        .start_page = 0,
-        .end_page = ssd1306_n_pages - 1
+    .start_column = 0,
+    .end_column = ssd1306_width - 1,
+    .start_page = 0,
+    .end_page = ssd1306_n_pages - 1
 };
+
+static bool wifi_ok = false;
 
 // ==================== NTP callback =====================
 static void ntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
@@ -50,14 +52,13 @@ static void ntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
         pbuf_copy_partial(p, buf, NTP_MSG_LEN, 0);
         pbuf_free(p);
 
-        // Transmit Timestamp começa no byte 40
         uint32_t secs_since_1900 = (buf[40] << 24) | (buf[41] << 16) |
                                    (buf[42] << 8) | buf[43];
 
         time_t epoch = secs_since_1900 - NTP_DELTA;
         struct tm *tm_info = gmtime(&epoch);
 
-        // Ajusta para UTC-3 (Brasil)
+        // Ajusta para UTC-3
         tm_info->tm_hour += TZ_OFFSET;
         if (tm_info->tm_hour < 0) {
             tm_info->tm_hour += 24;
@@ -71,12 +72,11 @@ static void ntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
                tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec,
                tm_info->tm_mday, tm_info->tm_mon + 1, tm_info->tm_year + 1900);
 
-        // Atualiza o RTC DS3231
         rtc_datetime_t now = {
             .second = tm_info->tm_sec,
             .minute = tm_info->tm_min,
             .hour   = tm_info->tm_hour,
-            .day    = tm_info->tm_wday == 0 ? 7 : tm_info->tm_wday, // DS3231: 1=domingo
+            .day    = tm_info->tm_wday == 0 ? 7 : tm_info->tm_wday,
             .date   = tm_info->tm_mday,
             .month  = tm_info->tm_mon + 1,
             .year   = tm_info->tm_year + 1900
@@ -98,7 +98,7 @@ static void ntp_request() {
     }
 
     uint8_t msg[NTP_MSG_LEN] = {0};
-    msg[0] = 0x1B; // LI=0, VN=3, Mode=3 (client)
+    msg[0] = 0x1B;
 
     struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, NTP_MSG_LEN, PBUF_RAM);
     memcpy(p->payload, msg, NTP_MSG_LEN);
@@ -112,7 +112,7 @@ int main() {
     stdio_init_all();
     sleep_ms(3000);
 
-    // Inicializa I2C (RTC DS3231e OLED SSD1306)
+    // Inicializa I2C
     i2c_init(I2C_PORT_RTC, 400 * 1000);
     i2c_init(I2C_PORT_OLED, 400 * 1000);
     gpio_set_function(SDA_PIN_RTC, GPIO_FUNC_I2C);
@@ -123,8 +123,7 @@ int main() {
     gpio_pull_up(SCL_PIN_RTC);
     gpio_pull_up(SDA_PIN_OLED);
     gpio_pull_up(SCL_PIN_OLED);
-    printf("I2C iniciado para RTC DS3231 e OLED SSD1306\n");
-    
+
     ssd1306_init(I2C_PORT_OLED, 0x3C, 128, 64);
     calculate_render_area_buffer_length(&area);
 
@@ -133,8 +132,7 @@ int main() {
     ssd1306_draw_string(ssd, 0, 0, "Iniciando...");
     render_on_display(ssd, &area);
 
-    // Inicializa Wi-Fi
-    bool wifi_ok = false;
+    // Wi-Fi
     if (cyw43_arch_init()) {
         printf("Erro ao inicializar Wi-Fi\n");
     } else {
@@ -143,6 +141,7 @@ int main() {
         if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASS,
             CYW43_AUTH_WPA2_AES_PSK, 10000)) {
             printf("⚠️ Falha Wi-Fi. Usando só RTC.\n");
+            wifi_ok = false;
         } else {
             printf("✅ Wi-Fi conectado!\n");
             wifi_ok = true;
@@ -157,25 +156,40 @@ int main() {
         ntp_request();
     }
 
-    // Loop principal → lê do RTC e mostra
+    // Loop principal
     while (true) {
         rtc_datetime_t dt;
         ds3231_get_datetime(I2C_PORT_RTC, &dt);
 
         memset(ssd, 0, sizeof(ssd));
 
-        printf("RTC: %02d/%02d/%04d %02d:%02d:%02d\n",
-               dt.date, dt.month, dt.year,
-               dt.hour, dt.minute, dt.second);
-
         char line[32];
+        // Data
         snprintf(line, sizeof(line), "%02d/%02d/%04d", dt.date, dt.month, dt.year);
         ssd1306_draw_string(ssd, 0, 0, line);
 
+        // Hora
         snprintf(line, sizeof(line), "%02d:%02d:%02d", dt.hour, dt.minute, dt.second);
         ssd1306_draw_string(ssd, 0, 16, line);
 
+        // Wi-Fi SSID
+        ssd1306_draw_string(ssd, 0, 40, "WiFi:");
+        ssd1306_draw_string(ssd, 40, 40, WIFI_SSID);
+
+        // Status
+        if (wifi_ok) {
+            ssd1306_draw_string(ssd, 0, 56, "Status: OK");
+        } else {
+            ssd1306_draw_string(ssd, 0, 56, "Status: FAIL");
+        }
+
         render_on_display(ssd, &area);
+
+        printf("RTC: %02d/%02d/%04d %02d:%02d:%02d | WiFi: %s (%s)\n",
+               dt.date, dt.month, dt.year,
+               dt.hour, dt.minute, dt.second,
+               WIFI_SSID, wifi_ok ? "OK" : "FAIL");
+
         sleep_ms(1000);
     }
 }
