@@ -11,8 +11,8 @@
 #define SSD1306_HEIGHT  64
 #define SSD1306_I2C i2c1
 #define SSD1306_I2C_ADDR 0x3C
-#define SSD1306_SDA_PIN 14
-#define SSD1306_SCL_PIN 15
+#define SSD1306_SDA_PIN 2 // BDL6 - 14 BDL7 - 2
+#define SSD1306_SCL_PIN 3 // BDL6 - 15 BDL7 - 3
 #define SSD1306_BUF_LEN (SSD1306_WIDTH * SSD1306_HEIGHT / 8)
 
 static uint8_t framebuffer[SSD1306_BUF_LEN]; // buffer estático (ideal para RTOS) da tela toda

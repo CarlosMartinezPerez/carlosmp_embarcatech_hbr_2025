@@ -4,7 +4,7 @@
 #include "string.h"
 
 int main() {
-    stdio_init_all();      // Inicializa a saída padrão (opcional para debug)
+    stdio_init_all();      // Inicializa a saída padrão (opcional para debug via monitor serial)
     ssd1306_init();        // Inicializa o I2C1 e o display OLED
 
     ssd1306_clear();       // Limpa o framebuffer
