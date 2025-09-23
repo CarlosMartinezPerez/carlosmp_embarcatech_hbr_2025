@@ -10,6 +10,8 @@ Placa de desenvolvimento para ESP32
 DebugProbe v3.0 com Raspberry Pi Pico  
 Raspberry Pi Pico  
 Arduino Nano  
+
+
 ---
 ## Sensores, Atuadores e Misc
 
@@ -23,6 +25,8 @@ Módulo Bluetooth 2.0 ZS-040
 Driver  
 Driver  
 Sensor  
+
+
 ---
 
 
