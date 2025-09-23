@@ -12,17 +12,18 @@ Raspberry Pi Pico
 Arduino Nano  
 
 
-## Sensores, Atuadores e Misc
+## Periféricos
 
-Sensor de umidade do solo HW-103 (Tabajara se chorar perto dele, enferruja)  
+Sensor de umidade do solo HW-103 (Tabajara - se chorar perto dele, enferruja)  
 Encoder MH-Sensor-Series (2x)
 Módulo Amplificador LM386  
-Conversor DC DC XL6009E1 (elevador de tensão)  
-Conversor DC DC LM2596 (abaixador de tensão)  
+Conversor DC-DC XL6009E1 (elevador de tensão)  
+Conversor DC-DC LM2596 (abaixador de tensão)  
 Módulo Carregador TP4056 para bateria de lítio (2x)  
 Módulo Bluetooth 2.0 ZS-040  
-Driver  
-Driver  
+Joystick (2x)  
+Driver para motor DC DRV8833 (3x)  
+Driver para motor DC TB66121FNG (2x)  
 Sensor  
 
 
