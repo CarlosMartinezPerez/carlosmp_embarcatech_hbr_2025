@@ -1,5 +1,5 @@
 # Hardware List
----
+
 ## MCU Boards  
 
 BitDogLab v6.3  
@@ -12,7 +12,6 @@ Raspberry Pi Pico
 Arduino Nano  
 
 
----
 ## Sensores, Atuadores e Misc
 
 Sensor de umidade do solo HW-103 (Tabajara se chorar perto dele, enferruja)  
@@ -27,7 +26,7 @@ Driver
 Sensor  
 
 
----
+
 
 
 
