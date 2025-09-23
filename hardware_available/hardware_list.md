@@ -1,6 +1,6 @@
 # Hardware List
 ---
-## MCU Boards
+## MCU Boards  
 
 BitDogLab v6.3  
 BitDogLab v7  
